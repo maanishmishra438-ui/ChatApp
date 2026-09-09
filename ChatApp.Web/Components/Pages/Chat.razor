@@ -1,0 +1,2247 @@
+@page "/chat/{RoomCode}"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@using ChatApp.Web.Data
+
+@inject NavigationManager Navigation
+@inject ChatApp.Web.Services.ChatService ChatService
+@inject IJSRuntime JS
+
+@implements IAsyncDisposable
+
+<PageTitle>Private Chat</PageTitle>
+
+
+@if (!hasJoined)
+{
+    <!-- ============================================================
+         JOIN SCREEN
+         ============================================================ -->
+
+    <div class="join-screen">
+
+        <div class="join-card">
+
+            <div class="join-brand">
+
+                <div class="join-brand-icon">
+                    🔒
+                </div>
+
+                <div class="join-brand-name">
+                    Chat<span>App</span>
+                </div>
+
+            </div>
+
+            <div class="room-badge">
+                <span class="room-badge-dot"></span>
+                PRIVATE ROOM
+            </div>
+
+            <div class="join-hero-icon">
+                <div class="join-hero-icon-inner">
+                    🔐
+                </div>
+            </div>
+
+            <h1>
+                Join Private Chat
+            </h1>
+
+            <p class="join-description">
+                Enter your display name to join this private conversation.
+            </p>
+
+            <div class="join-form">
+
+                <label for="displayName">
+                    Display name
+                </label>
+
+                <div class="name-input-wrapper">
+
+                    <span class="name-input-icon">
+                        👤
+                    </span>
+
+                    <input id="displayName"
+                           @bind="joinName"
+                           @bind:event="oninput"
+                           maxlength="40"
+                           autocomplete="off"
+                           placeholder="e.g. Manish"
+                           @onkeydown="HandleJoinKeyDown" />
+
+                    @if (!string.IsNullOrWhiteSpace(joinName))
+                    {
+                        <span class="input-check">
+                            ✓
+                        </span>
+                    }
+
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(joinError))
+                {
+                    <div class="join-error">
+
+                        <span>
+                            !
+                        </span>
+
+                        @joinError
+                    </div>
+                }
+
+                <button class="join-button"
+                        @onclick="JoinChat"
+                        disabled="@(isJoining || string.IsNullOrWhiteSpace(joinName))">
+
+                    @if (isJoining)
+                    {
+                        <span class="join-spinner"></span>
+
+                        <span>
+                            Joining...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Join Chat
+                        </span>
+
+                        <span class="join-arrow">
+                            →
+                        </span>
+                    }
+
+                </button>
+
+            </div>
+
+            <div class="join-privacy">
+
+                <div class="privacy-icon">
+                    🔒
+                </div>
+
+                <div class="privacy-content">
+
+                    <strong>
+                        Private conversation
+                    </strong>
+
+                    <span>
+                        Anyone with the room link can enter this conversation.
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="join-footer">
+
+                <span>
+                    Real-time messaging
+                </span>
+
+                <span class="footer-separator">
+                    •
+                </span>
+
+                <span>
+                    Private room
+                </span>
+
+                <span class="footer-separator">
+                    •
+                </span>
+
+                <span>
+                    Messages saved
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+else
+{
+    <!-- ============================================================
+         CHAT
+         ============================================================ -->
+
+    <div class="chat-shell">
+
+        <!-- ========================================================
+             TOP BAR
+             ======================================================== -->
+
+        <header class="topbar">
+
+            <a class="logo"
+               href="/">
+
+                Chat<span>App</span>
+
+            </a>
+
+            <div class="top-actions">
+
+                <div class="user-chip">
+
+                    <span class="user-chip-avatar">
+                        @Initial
+                    </span>
+
+                    <span class="user-chip-name">
+                        @name
+                    </span>
+
+                </div>
+
+                <span class="connection">
+
+                    <i class="@(connected ? "online" : "offline")"></i>
+
+                    @(connected
+                                    ? "Connected"
+                                    : "Connecting…")
+
+            </span>
+
+                <button class="share-button"
+                        @onclick="CopyInvite">
+
+                    <span class="share-icon">
+                        ↗
+                    </span>
+
+                    Copy invite link
+
+                </button>
+
+                <button class="leave-button"
+                        @onclick="OpenLeaveModal"
+                        disabled="@isLeaving">
+
+                    <span class="leave-icon">
+                        ↪
+                    </span>
+
+                    Leave room
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ========================================================
+             LAYOUT
+             ======================================================== -->
+
+        <main class="chat-layout">
+
+            <!-- SIDEBAR -->
+
+            <aside class="side-panel">
+
+                <div class="avatar">
+                    @Initial
+                </div>
+
+                <h2>
+                    Private chat
+                </h2>
+
+                <p>
+                    Send this invite link to the person you want to chat with.
+                </p>
+
+                <div class="invite">
+
+                    <small>
+                        INVITE LINK
+                    </small>
+
+                    <div class="invite-url">
+                        @InviteUrl
+                    </div>
+
+                    <button @onclick="CopyInvite">
+                        Copy link
+                    </button>
+
+                </div>
+
+                <div class="warning">
+                    Keep the link private.
+                    Anyone with the link can enter this room.
+                </div>
+
+                <button class="side-leave-button"
+                        @onclick="OpenLeaveModal"
+                        disabled="@isLeaving">
+
+                    <span>
+                        ↪
+                    </span>
+
+                    Leave this room
+
+                </button>
+
+            </aside>
+
+
+            <!-- CONVERSATION -->
+
+            <section class="conversation">
+
+                <!-- HEADER -->
+
+                <div class="conversation-header">
+
+                    <div>
+
+                        <div class="conversation-title-row">
+
+                            <h3>
+                                Private Room
+                            </h3>
+
+                            <span class="room-private-pill">
+                                Private
+                            </span>
+
+                        </div>
+
+                        <span class="room-code-label">
+                            Room @RoomCode
+                        </span>
+
+                    </div>
+
+                    <div class="room-status">
+
+                        <span class="status-dot"></span>
+
+                        Active
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     MESSAGES
+                     ================================================= -->
+
+                <div class="messages"
+                     @ref="messagesContainer">
+
+                @if (messages.Count == 0)
+                    {
+                        <div class="empty">
+
+                            <div class="spark">
+                                ✦
+                            </div>
+
+                            <h4>
+                                No messages yet
+                            </h4>
+
+                            <p>
+                                Send the first message.
+                            </p>
+
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var message in messages)
+                        {
+                            var mine =
+                            IsMine(message);
+
+                            <div class="message-row @(mine ? "mine" : "theirs")"
+                                 data-message-id="@message.Id"
+                                 data-is-read="@message.IsRead.ToString().ToLowerInvariant()">
+
+                                <!-- =================================================
+                                     MESSAGE ACTIONS
+                                     ================================================= -->
+
+                                <div class="message-hover-actions">
+
+                                    <button type="button"
+                                            class="reply-message-button"
+                                            @onclick="() => StartReply(message)"
+                                            title="Reply to this message">
+
+                                        <span class="reply-message-icon">
+                                            ↩
+                                        </span>
+
+                                        <span>
+                                            Reply
+                                        </span>
+
+                                    </button>
+
+                                    <div class="message-menu-wrap">
+
+                                        <button type="button"
+                                                class="message-menu-button"
+                                                @onclick="() => ToggleMessageMenu(message.Id)"
+                                                title="Message options">
+
+                                            ⋯
+
+                                        </button>
+
+                                        @if (openMenuMessageId == message.Id)
+                                        {
+                                            <div class="message-action-menu"
+                                                 @onclick:stopPropagation="true">
+
+                                                <button type="button"
+                                                        class="message-action-item"
+                                                        @onclick="() => AskDeleteForMe(message)">
+
+                                                    <span class="message-action-icon">
+                                                        ◯
+                                                    </span>
+
+                                                    <span>
+                                                        Delete for me
+                                                    </span>
+
+                                                </button>
+
+                                                @if (mine && !message.IsDeleted)
+                                                {
+                                                    <button type="button"
+                                                            class="message-action-item danger"
+                                                            @onclick="() => AskUnsend(message)">
+
+                                                        <span class="message-action-icon">
+                                                            ↶
+                                                        </span>
+
+                                                        <span>
+                                                            Unsend
+                                                        </span>
+
+                                                    </button>
+                                                }
+
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- =================================================
+                                     BUBBLE
+                                     ================================================= -->
+
+                                <div class="bubble">
+
+                                    @if (message.IsDeleted)
+                                    {
+                                        <div class="deleted-message">
+
+                                            <span class="deleted-message-icon">
+                                                ◌
+                                            </span>
+
+                                            <span class="deleted-message-text">
+                                                This message was deleted
+                                            </span>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <!-- =================================================
+                                             QUOTED REPLY
+                                             ================================================= -->
+                                        @if (message.ReplyToMessageId.HasValue &&
+                                                                !string.IsNullOrWhiteSpace(message.ReplyToText))
+                                        {
+                                            <div class="quoted-message">
+
+                                                <div class="quoted-message-line"></div>
+
+                                                <div class="quoted-message-content">
+
+                                                    <span class="quoted-message-sender">
+                                                        @message.ReplyToSender
+                                                    </span>
+
+                                                    <span class="quoted-message-text">
+                                                        @GetReplyPreview(message.ReplyToText)
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+                                        }
+
+                                        <!-- SENDER -->
+                                        @if (!mine)
+                                        {
+                                            <strong>
+                                                @message.Sender
+                                            </strong>
+                                        }
+
+                                        <!-- MESSAGE TEXT -->
+
+                                        <div class="message-text">
+                                            @message.Text
+                                        </div>
+                                    }
+
+
+                                    <!-- FOOTER -->
+
+                                    <div class="message-footer">
+
+                                        <time>
+                                            @message.SentAt.ToLocalTime().ToString("HH:mm")
+                                        </time>
+
+                                        @if (mine)
+                                        {
+                                            @if (message.IsDeleted)
+                                            {
+                                                <span class="message-read deleted-status">
+                                                    Deleted
+                                                </span>
+                                            }
+                                            else if (message.IsRead)
+                                            {
+                                                <span class="message-read seen"
+                                                      title="@GetSeenTitle(message)">
+
+                                                    @GetSeenText(message)
+
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="message-read sent"
+                                                      title="Delivered">
+
+                                                    Sent
+
+                                                </span>
+                                            }
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+
+                <!-- ==================================================
+                     TYPING
+                     ================================================== -->
+                @if (!string.IsNullOrWhiteSpace(typingUser))
+                {
+                    <div class="typing">
+
+                        <span>
+                            @typingUser is typing
+                        </span>
+
+                        <span class="typing-dots">
+                            <i></i>
+                            <i></i>
+                            <i></i>
+                        </span>
+
+                    </div>
+                }
+
+
+                <!-- ==================================================
+                     REPLY PREVIEW
+                     ================================================== -->
+                @if (replyingTo is not null)
+                {
+                    <div class="reply-preview">
+
+                        <div class="reply-preview-accent"></div>
+
+                        <div class="reply-preview-icon">
+                            ↩
+                        </div>
+
+                        <div class="reply-preview-content">
+
+                            <span class="reply-preview-label">
+                                Replying to @replyingTo.Sender
+                            </span>
+
+                            <span class="reply-preview-text">
+                                @GetReplyPreview(replyingTo.Text)
+                            </span>
+
+                        </div>
+
+                        <button type="button"
+                                class="reply-preview-close"
+                                @onclick="CancelReply"
+                                title="Cancel reply">
+
+                            ×
+
+                        </button>
+
+                    </div>
+                }
+
+
+                <!-- ==================================================
+                     COMPOSER
+                     ================================================== -->
+
+                <footer class="composer">
+
+                    <textarea @ref="messageInput"
+                              @bind="draft"
+                              @bind:event="oninput"
+                              @onkeydown="HandleKeyDown"
+                              placeholder="Type a message..."
+                              rows="1"
+                              maxlength="2000"
+                              autocomplete="off"></textarea>
+
+                    <button class="send"
+                            @onclick="Send"
+                            disabled="@(!connected || string.IsNullOrWhiteSpace(draft))"
+                            title="Send message">
+
+                        →
+
+                    </button>
+
+                </footer>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- ============================================================
+         TOAST
+         ============================================================ -->
+    @if (showToast)
+    {
+        <div class="toast">
+            @toastMessage
+        </div>
+    }
+
+
+    <!-- ============================================================
+         LEAVE MODAL
+         ============================================================ -->
+    @if (showLeaveModal)
+    {
+        <div class="leave-modal-backdrop"
+             @onclick="CloseLeaveModal">
+
+            <div class="leave-modal"
+                 @onclick:stopPropagation="true">
+
+                <div class="leave-modal-icon">
+                    ↪
+                </div>
+
+                <div class="leave-modal-content">
+
+                    <h3>
+                        Leave this room?
+                    </h3>
+
+                    <p>
+                        You'll disconnect from this conversation.
+                        You can join again later using the same room link.
+                    </p>
+
+                </div>
+
+                <div class="leave-modal-actions">
+
+                    <button class="stay-button"
+                            @onclick="CloseLeaveModal"
+                            disabled="@isLeaving">
+
+                        Stay here
+
+                    </button>
+
+                    <button class="confirm-leave-button"
+                            @onclick="LeaveRoom"
+                            disabled="@isLeaving">
+
+                        @if (isLeaving)
+                        {
+                            <span class="leave-spinner"></span>
+
+                            <span>
+                                Leaving...
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Leave room
+                            </span>
+
+                            <span>
+                                →
+                            </span>
+                        }
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- ============================================================
+         DELETE MODAL
+         ============================================================ -->
+    @if (showDeleteModal && selectedMessage is not null)
+    {
+        <div class="delete-modal-backdrop"
+             @onclick="CloseDeleteModal">
+
+            <div class="delete-modal"
+                 @onclick:stopPropagation="true">
+
+                <div class="delete-modal-icon">
+                    @if (deleteMode == DeleteMode.Unsend)
+                    {
+                        
+                        }
+                    else
+                    {
+                        
+                        }
+                </div>
+
+                <div class="delete-modal-content">
+
+                    @if (deleteMode == DeleteMode.Unsend)
+                    {
+                        <h3>
+                            Unsend this message?
+                        </h3>
+
+                        <p>
+                            This message will be deleted for everyone in this room.
+                        </p>
+                    }
+                    else
+                    {
+                        <h3>
+                            Delete for you?
+                        </h3>
+
+                        <p>
+                            This message will be removed from your chat history only.
+                        </p>
+                    }
+
+                    <div class="delete-modal-preview">
+                        "@GetDeletePreview(selectedMessage.Text)"
+                    </div>
+
+                </div>
+
+                <div class="delete-modal-actions">
+
+                    <button class="delete-cancel-button"
+                            @onclick="CloseDeleteModal"
+                            disabled="@isDeleting">
+
+                        Cancel
+
+                    </button>
+
+                    <button class="delete-confirm-button @(deleteMode == DeleteMode.Unsend ? "danger" : "")"
+                            @onclick="ConfirmDelete"
+                            disabled="@isDeleting">
+
+                        @if (isDeleting)
+                        {
+                            <span class="delete-spinner"></span>
+
+                            <span>
+                                Working...
+                            </span>
+                        }
+                        else if (deleteMode == DeleteMode.Unsend)
+                        {
+                            <span>
+                                Unsend
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Delete
+                            </span>
+                        }
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+}
+
+
+@code {
+
+    // ============================================================
+    // PARAMETERS
+    // ============================================================
+
+    [Parameter]
+    public string RoomCode { get; set; } = string.Empty;
+
+
+    // ============================================================
+    // QUERY STRING
+    // ============================================================
+
+    private string QueryName { get; set; } =
+        string.Empty;
+
+
+    // ============================================================
+    // SIGNALR
+    // ============================================================
+
+    private HubConnection? hub;
+
+    private bool connected;
+
+
+    // ============================================================
+    // JS
+    // ============================================================
+
+    private DotNetObjectReference<Chat>? dotNetReference;
+
+
+    // ============================================================
+    // ELEMENT REFERENCES
+    // ============================================================
+
+    private ElementReference messagesContainer;
+
+    private ElementReference messageInput;
+
+
+    // ============================================================
+    // MESSAGE DATA
+    // ============================================================
+
+    private readonly List<MessageVm> messages =
+        new();
+
+    private readonly Dictionary<long, DateTime> seenTimes =
+        new();
+
+
+    // ============================================================
+    // REPLY STATE
+    // ============================================================
+
+    private MessageVm? replyingTo;
+
+
+    // ============================================================
+    // DELETE STATE
+    // ============================================================
+
+    private long? openMenuMessageId;
+
+    private MessageVm? selectedMessage;
+
+    private bool showDeleteModal;
+
+    private bool isDeleting;
+
+    private DeleteMode deleteMode =
+        DeleteMode.DeleteForMe;
+
+
+    // ============================================================
+    // TIMERS
+    // ============================================================
+
+    private CancellationTokenSource? typingCts;
+
+    private CancellationTokenSource? seenTimerCts;
+
+    private PeriodicTimer? seenTimer;
+
+
+    // ============================================================
+    // STATE
+    // ============================================================
+
+    private string name =
+        string.Empty;
+
+    private string joinName =
+        string.Empty;
+
+    private string draft =
+        string.Empty;
+
+    private string? joinError;
+
+    private string? error;
+
+    private string? typingUser;
+
+    private bool hasJoined;
+
+    private bool isJoining;
+
+    private bool showToast;
+
+    private string toastMessage =
+        string.Empty;
+
+    private bool showLeaveModal;
+
+    private bool isLeaving;
+
+
+    // ============================================================
+    // INVITE URL
+    // ============================================================
+
+    private string InviteUrl =>
+        $"{Navigation.BaseUri.TrimEnd('/')}/chat/{RoomCode}";
+
+
+    // ============================================================
+    // INITIAL
+    // ============================================================
+
+    private string Initial =>
+        string.IsNullOrWhiteSpace(name)
+            ? "?"
+            : name.Trim()[0]
+                .ToString()
+                .ToUpperInvariant();
+
+
+    // ============================================================
+    // INITIALIZE
+    // ============================================================
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            RoomCode =
+                RoomCode
+                    .Trim()
+                    .ToLowerInvariant();
+
+            var uri =
+                Navigation.ToAbsoluteUri(
+                    Navigation.Uri);
+
+            var query =
+                Microsoft.AspNetCore.WebUtilities
+                    .QueryHelpers
+                    .ParseQuery(uri.Query);
+
+            if (query.TryGetValue(
+                    "name",
+                    out var queryName))
+            {
+                QueryName =
+                    queryName.ToString();
+            }
+
+            var exists =
+                await ChatService.RoomExistsAsync(
+                    RoomCode);
+
+            if (!exists)
+            {
+                Navigation.NavigateTo("/");
+
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(QueryName))
+            {
+                var existingName =
+                    QueryName.Trim();
+
+                if (existingName.Length > 40)
+                {
+                    existingName =
+                        existingName[..40];
+                }
+
+                if (!string.IsNullOrWhiteSpace(existingName))
+                {
+                    name = existingName;
+
+                    joinName = existingName;
+
+                    hasJoined = true;
+
+                    await InitializeChatAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+
+            joinError = ex.Message;
+        }
+    }
+
+
+    // ============================================================
+    // JOIN
+    // ============================================================
+
+    private async Task JoinChat()
+    {
+        joinError = null;
+
+        error = null;
+
+        var enteredName =
+            joinName.Trim();
+
+        if (string.IsNullOrWhiteSpace(enteredName))
+        {
+            joinError =
+                "Please enter your name.";
+
+            return;
+        }
+
+        if (enteredName.Length < 2)
+        {
+            joinError =
+                "Name must be at least 2 characters.";
+
+            return;
+        }
+
+        if (enteredName.Length > 40)
+        {
+            joinError =
+                "Name cannot be longer than 40 characters.";
+
+            return;
+        }
+
+        isJoining = true;
+
+        try
+        {
+            name = enteredName;
+
+            var exists =
+                await ChatService.RoomExistsAsync(
+                    RoomCode);
+
+            if (!exists)
+            {
+                joinError =
+                    "This chat room does not exist.";
+
+                return;
+            }
+
+            hasJoined = true;
+
+            await InvokeAsync(
+                StateHasChanged);
+
+            await InitializeChatAsync();
+        }
+        catch (Exception ex)
+        {
+            hasJoined = false;
+
+            joinError =
+                $"Unable to join chat: {ex.Message}";
+        }
+        finally
+        {
+            isJoining = false;
+        }
+    }
+
+
+    // ============================================================
+    // JOIN ENTER
+    // ============================================================
+
+    private async Task HandleJoinKeyDown(
+        KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await JoinChat();
+        }
+    }
+
+
+    // ============================================================
+    // SIGNALR
+    // ============================================================
+
+    private async Task InitializeChatAsync()
+    {
+        if (hub is not null)
+        {
+            return;
+        }
+
+        // --------------------------------------------------------
+        // HISTORY
+        // --------------------------------------------------------
+
+        var history =
+            await ChatService.GetMessagesAsync(
+                RoomCode,
+                name);
+
+        messages.Clear();
+
+        foreach (var item in history)
+        {
+            messages.Add(
+                new MessageVm(
+                    item.Id,
+                    item.Sender,
+                    item.Text,
+                    item.SentAt,
+                    item.IsRead,
+                    item.ReplyToMessageId,
+                    item.ReplyToSender,
+                    item.ReplyToText,
+                    item.IsDeleted));
+        }
+
+
+        // --------------------------------------------------------
+        // CREATE HUB
+        // --------------------------------------------------------
+
+        hub =
+            new HubConnectionBuilder()
+                .WithUrl(
+                    Navigation.ToAbsoluteUri(
+                        "/chathub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+
+        // --------------------------------------------------------
+        // RECEIVE MESSAGE
+        // --------------------------------------------------------
+
+        hub.On<MessageVm>(
+            "ReceiveMessage",
+            async message =>
+            {
+                await InvokeAsync(() =>
+                {
+                    if (messages.All(
+                            x => x.Id != message.Id))
+                    {
+                        messages.Add(message);
+                    }
+
+                    StateHasChanged();
+                });
+
+                await ScrollToBottomAsync();
+            });
+
+
+        // --------------------------------------------------------
+        // MESSAGE READ
+        // --------------------------------------------------------
+
+        hub.On<long>(
+            "MessageRead",
+            async messageId =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var index =
+                        messages.FindIndex(
+                            x => x.Id == messageId);
+
+                    if (index >= 0)
+                    {
+                        var message =
+                            messages[index];
+
+                        messages[index] =
+                            message with
+                            {
+                                IsRead = true
+                            };
+
+                        seenTimes[messageId] =
+                            DateTime.UtcNow;
+                    }
+
+                    StartSeenTimer();
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // TYPING
+        // --------------------------------------------------------
+
+        hub.On<string, bool>(
+            "UserTyping",
+            async (sender, isTyping) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    if (string.Equals(
+                            sender,
+                            name,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+
+                    typingUser =
+                        isTyping
+                            ? sender
+                            : null;
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // DELETE FOR ME
+        // --------------------------------------------------------
+
+        hub.On<long>(
+            "MessageDeletedForMe",
+            async messageId =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var index =
+                        messages.FindIndex(
+                            x => x.Id == messageId);
+
+                    if (index >= 0)
+                    {
+                        messages.RemoveAt(index);
+                    }
+
+                    openMenuMessageId = null;
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // UNSEND
+        // --------------------------------------------------------
+
+        hub.On<long>(
+            "MessageUnsent",
+            async messageId =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var index =
+                        messages.FindIndex(
+                            x => x.Id == messageId);
+
+                    if (index >= 0)
+                    {
+                        var message =
+                            messages[index];
+
+                        messages[index] =
+                            message with
+                            {
+                                Text =
+                                    "[This message was deleted]",
+
+                                ReplyToMessageId = null,
+
+                                ReplyToSender = null,
+
+                                ReplyToText = null,
+
+                                IsDeleted = true
+                            };
+                    }
+
+                    openMenuMessageId = null;
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // RECONNECTING
+        // --------------------------------------------------------
+
+        hub.Reconnecting += _ =>
+        {
+            connected = false;
+
+            return InvokeAsync(
+                StateHasChanged);
+        };
+
+
+        // --------------------------------------------------------
+        // RECONNECTED
+        // --------------------------------------------------------
+
+        hub.Reconnected += async _ =>
+        {
+            if (hub is null)
+            {
+                return;
+            }
+
+            try
+            {
+                await hub.InvokeAsync(
+                    "JoinRoom",
+                    RoomCode);
+
+                connected = true;
+            }
+            catch
+            {
+                connected = false;
+            }
+
+            await InvokeAsync(
+                StateHasChanged);
+        };
+
+
+        // --------------------------------------------------------
+        // CLOSED
+        // --------------------------------------------------------
+
+        hub.Closed += _ =>
+        {
+            connected = false;
+
+            return InvokeAsync(
+                StateHasChanged);
+        };
+
+
+        // --------------------------------------------------------
+        // START
+        // --------------------------------------------------------
+
+        await hub.StartAsync();
+
+        await hub.InvokeAsync(
+            "JoinRoom",
+            RoomCode);
+
+        connected = true;
+
+        StartSeenTimer();
+
+        await InvokeAsync(
+            StateHasChanged);
+
+        await ScrollToBottomAsync();
+    }
+
+
+    // ============================================================
+    // MARK VISIBLE MESSAGE
+    // ============================================================
+
+    [JSInvokable]
+    public async Task MarkVisibleMessage(
+        long messageId)
+    {
+        if (hub is null ||
+            !connected ||
+            string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        try
+        {
+            await hub.InvokeAsync(
+                "MarkMessageAsRead",
+                RoomCode,
+                messageId,
+                name);
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // START REPLY
+    // ============================================================
+
+    private async Task StartReply(
+        MessageVm message)
+    {
+        if (message.IsDeleted)
+        {
+            return;
+        }
+
+        replyingTo = message;
+
+        openMenuMessageId = null;
+
+        await InvokeAsync(
+            StateHasChanged);
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "chatApp.focusMessageInput");
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // CANCEL REPLY
+    // ============================================================
+
+    private void CancelReply()
+    {
+        replyingTo = null;
+    }
+
+
+    // ============================================================
+    // REPLY PREVIEW
+    // ============================================================
+
+    private string GetReplyPreview(
+        string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var cleanText =
+            text
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Trim();
+
+        if (cleanText.Length <= 90)
+        {
+            return cleanText;
+        }
+
+        return cleanText[..90] + "…";
+    }
+
+
+    // ============================================================
+    // MESSAGE MENU
+    // ============================================================
+
+    private void ToggleMessageMenu(
+        long messageId)
+    {
+        if (openMenuMessageId == messageId)
+        {
+            openMenuMessageId = null;
+        }
+        else
+        {
+            openMenuMessageId = messageId;
+        }
+    }
+
+
+    // ============================================================
+    // DELETE FOR ME MODAL
+    // ============================================================
+
+    private void AskDeleteForMe(
+        MessageVm message)
+    {
+        selectedMessage = message;
+
+        deleteMode =
+            DeleteMode.DeleteForMe;
+
+        showDeleteModal = true;
+
+        openMenuMessageId = null;
+    }
+
+
+    // ============================================================
+    // UNSEND MODAL
+    // ============================================================
+
+    private void AskUnsend(
+        MessageVm message)
+    {
+        if (!IsMine(message) ||
+            message.IsDeleted)
+        {
+            return;
+        }
+
+        selectedMessage = message;
+
+        deleteMode =
+            DeleteMode.Unsend;
+
+        showDeleteModal = true;
+
+        openMenuMessageId = null;
+    }
+
+
+    // ============================================================
+    // CLOSE DELETE MODAL
+    // ============================================================
+
+    private void CloseDeleteModal()
+    {
+        if (isDeleting)
+        {
+            return;
+        }
+
+        showDeleteModal = false;
+
+        selectedMessage = null;
+
+        deleteMode =
+            DeleteMode.DeleteForMe;
+    }
+
+
+    // ============================================================
+    // CONFIRM DELETE
+    // ============================================================
+
+    private async Task ConfirmDelete()
+    {
+        if (selectedMessage is null ||
+            hub is null ||
+            !connected)
+        {
+            return;
+        }
+
+        isDeleting = true;
+
+        var messageId =
+            selectedMessage.Id;
+
+        try
+        {
+            if (deleteMode == DeleteMode.DeleteForMe)
+            {
+                await hub.InvokeAsync(
+                    "DeleteMessageForMe",
+                    RoomCode,
+                    messageId,
+                    name);
+
+                showDeleteModal = false;
+
+                selectedMessage = null;
+            }
+            else
+            {
+                await hub.InvokeAsync(
+                    "UnsendMessage",
+                    RoomCode,
+                    messageId,
+                    name);
+
+                showDeleteModal = false;
+
+                selectedMessage = null;
+            }
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            error =
+                $"Unable to delete message: {ex.Message}";
+
+            showDeleteModal = false;
+
+            selectedMessage = null;
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+
+    // ============================================================
+    // DELETE PREVIEW
+    // ============================================================
+
+    private string GetDeletePreview(
+        string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var cleanText =
+            text
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Trim();
+
+        if (cleanText.Length <= 100)
+        {
+            return cleanText;
+        }
+
+        return cleanText[..100] + "…";
+    }
+
+
+    // ============================================================
+    // KEYBOARD / TYPING
+    // ============================================================
+
+    private async Task HandleKeyDown(
+        KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" &&
+            !e.ShiftKey)
+        {
+            await Send();
+
+            return;
+        }
+
+        if (hub is null ||
+            !connected)
+        {
+            return;
+        }
+
+        try
+        {
+            await hub.InvokeAsync(
+                "UserTyping",
+                RoomCode,
+                name,
+                true);
+        }
+        catch
+        {
+        }
+
+        typingCts?.Cancel();
+
+        typingCts?.Dispose();
+
+        typingCts =
+            new CancellationTokenSource();
+
+        _ = StopTypingLaterAsync(
+            typingCts.Token);
+    }
+
+
+    // ============================================================
+    // STOP TYPING
+    // ============================================================
+
+    private async Task StopTypingLaterAsync(
+        CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(
+                900,
+                token);
+
+            if (token.IsCancellationRequested ||
+                hub is null ||
+                !connected)
+            {
+                return;
+            }
+
+            try
+            {
+                await hub.InvokeAsync(
+                    "UserTyping",
+                    RoomCode,
+                    name,
+                    false);
+            }
+            catch
+            {
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // SEND
+    // ============================================================
+
+    private async Task Send()
+    {
+        if (hub is null ||
+            !connected)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(draft))
+        {
+            return;
+        }
+
+        var text =
+            draft.Trim();
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        if (text.Length > 2000)
+        {
+            text =
+                text[..2000];
+        }
+
+        // Capture reply before clearing.
+        var replyId =
+            replyingTo?.Id;
+
+        draft = string.Empty;
+
+        try
+        {
+            await hub.InvokeAsync(
+                "SendMessage",
+                RoomCode,
+                name,
+                text,
+                replyId);
+
+            typingUser = null;
+
+            typingCts?.Cancel();
+
+            replyingTo = null;
+
+            await InvokeAsync(
+                StateHasChanged);
+
+            await ScrollToBottomAsync();
+        }
+        catch (Exception ex)
+        {
+            draft = text;
+
+            error =
+                $"Unable to send message: {ex.Message}";
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+    }
+
+
+    // ============================================================
+    // COPY INVITE
+    // ============================================================
+
+    private async Task CopyInvite()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "navigator.clipboard.writeText",
+                InviteUrl);
+
+            toastMessage =
+                "Invite link copied";
+
+            showToast = true;
+
+            await InvokeAsync(
+                StateHasChanged);
+
+            await Task.Delay(
+                1500);
+
+            showToast = false;
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // LEAVE MODAL
+    // ============================================================
+
+    private void OpenLeaveModal()
+    {
+        if (!isLeaving)
+        {
+            showLeaveModal = true;
+        }
+    }
+
+
+    private void CloseLeaveModal()
+    {
+        if (!isLeaving)
+        {
+            showLeaveModal = false;
+        }
+    }
+
+
+    // ============================================================
+    // LEAVE ROOM
+    // ============================================================
+
+    private async Task LeaveRoom()
+    {
+        if (isLeaving)
+        {
+            return;
+        }
+
+        isLeaving = true;
+
+        try
+        {
+            typingCts?.Cancel();
+
+            seenTimerCts?.Cancel();
+
+            if (hub is not null)
+            {
+                try
+                {
+                    await hub.DisposeAsync();
+                }
+                catch
+                {
+                }
+
+                hub = null;
+            }
+
+            connected = false;
+
+            Navigation.NavigateTo(
+                "/",
+                forceLoad: true);
+        }
+        catch
+        {
+            isLeaving = false;
+
+            showLeaveModal = false;
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+    }
+
+
+    // ============================================================
+    // IS MINE
+    // ============================================================
+
+    private bool IsMine(
+        MessageVm message)
+    {
+        return message.Sender.Equals(
+            name,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    // ============================================================
+    // SEEN TIMER
+    // ============================================================
+
+    private void StartSeenTimer()
+    {
+        if (seenTimer is not null)
+        {
+            return;
+        }
+
+        seenTimerCts =
+            new CancellationTokenSource();
+
+        seenTimer =
+            new PeriodicTimer(
+                TimeSpan.FromSeconds(15));
+
+        _ = RunSeenTimerAsync(
+            seenTimerCts.Token);
+    }
+
+
+    private async Task RunSeenTimerAsync(
+        CancellationToken token)
+    {
+        try
+        {
+            while (
+                seenTimer is not null &&
+                await seenTimer.WaitForNextTickAsync(token))
+            {
+                if (seenTimes.Count > 0)
+                {
+                    await InvokeAsync(
+                        StateHasChanged);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // SEEN TEXT
+    // ============================================================
+
+    private string GetSeenText(
+        MessageVm message)
+    {
+        if (!message.IsRead)
+        {
+            return "Sent";
+        }
+
+        if (!seenTimes.TryGetValue(
+                message.Id,
+                out var seenAt))
+        {
+            return "Seen";
+        }
+
+        var elapsed =
+            DateTime.UtcNow - seenAt;
+
+        if (elapsed.TotalSeconds < 60)
+        {
+            return "Seen just now";
+        }
+
+        if (elapsed.TotalMinutes < 60)
+        {
+            var minutes =
+                Math.Max(
+                    1,
+                    (int)Math.Floor(
+                        elapsed.TotalMinutes));
+
+            return minutes == 1
+                ? "Seen 1 min ago"
+                : $"Seen {minutes} min ago";
+        }
+
+        if (elapsed.TotalHours < 24)
+        {
+            var hours =
+                Math.Max(
+                    1,
+                    (int)Math.Floor(
+                        elapsed.TotalHours));
+
+            return hours == 1
+                ? "Seen 1 hr ago"
+                : $"Seen {hours} hrs ago";
+        }
+
+        if (elapsed.TotalDays < 7)
+        {
+            var days =
+                Math.Max(
+                    1,
+                    (int)Math.Floor(
+                        elapsed.TotalDays));
+
+            return days == 1
+                ? "Seen 1 day ago"
+                : $"Seen {days} days ago";
+        }
+
+        return
+            $"Seen {seenAt.ToLocalTime():dd MMM}";
+    }
+
+
+    // ============================================================
+    // SEEN TITLE
+    // ============================================================
+
+    private string GetSeenTitle(
+        MessageVm message)
+    {
+        if (!message.IsRead)
+        {
+            return "Delivered";
+        }
+
+        if (!seenTimes.TryGetValue(
+                message.Id,
+                out var seenAt))
+        {
+            return "Seen";
+        }
+
+        return
+            $"Seen at {seenAt.ToLocalTime():dd MMM yyyy HH:mm}";
+    }
+
+
+    // ============================================================
+    // AFTER RENDER
+    // ============================================================
+
+    protected override async Task OnAfterRenderAsync(
+        bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetReference =
+                DotNetObjectReference.Create(this);
+
+            try
+            {
+                await JS.InvokeVoidAsync(
+                    "chatApp.initialize");
+            }
+            catch
+            {
+            }
+        }
+
+        if (hasJoined &&
+            connected &&
+            dotNetReference is not null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync(
+                    "chatApp.observeMessages",
+                    dotNetReference);
+            }
+            catch
+            {
+            }
+        }
+    }
+
+
+    // ============================================================
+    // SCROLL
+    // ============================================================
+
+    private async Task ScrollToBottomAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "chatApp.scrollToBottom");
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // DISPOSE
+    // ============================================================
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            typingCts?.Cancel();
+
+            typingCts?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            seenTimerCts?.Cancel();
+
+            seenTimerCts?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            seenTimer?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            dotNetReference?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            if (hub is not null)
+            {
+                await hub.DisposeAsync();
+            }
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
+    // DELETE MODE
+    // ============================================================
+
+    private enum DeleteMode
+    {
+        DeleteForMe,
+        Unsend
+    }
+
+
+    // ============================================================
+    // VIEW MODEL
+    // ============================================================
+
+    private sealed record MessageVm(
+        long Id,
+        string Sender,
+        string Text,
+        DateTime SentAt,
+        bool IsRead,
+        long? ReplyToMessageId,
+        string? ReplyToSender,
+        string? ReplyToText,
+        bool IsDeleted = false);
+}

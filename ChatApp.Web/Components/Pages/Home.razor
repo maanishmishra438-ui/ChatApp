@@ -1,0 +1,404 @@
+@page "/"
+
+@using Microsoft.AspNetCore.Components.Web
+
+@inject ChatApp.Web.Services.ChatService ChatService
+@inject NavigationManager Navigation
+
+<PageTitle>Privy — Private conversations</PageTitle>
+
+<div class="privy-page">
+
+    <!-- BACKGROUND DECOR -->
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <div class="privy-container">
+
+        <!-- =========================================================
+             NAVBAR
+             ========================================================= -->
+
+        <header class="privy-nav">
+
+            <a class="privy-logo" href="/">
+                <span class="privy-logo-mark">P</span>
+
+                <span class="privy-logo-text">
+                    Priv<span>y</span>
+                </span>
+            </a>
+
+            <div class="nav-badge">
+                <span class="nav-dot"></span>
+                Private by design
+            </div>
+
+        </header>
+
+
+        <!-- =========================================================
+             HERO
+             ========================================================= -->
+
+        <main class="privy-hero">
+
+            <!-- EYEBROW -->
+
+            <div class="hero-eyebrow">
+
+                <span class="eyebrow-line"></span>
+
+                PRIVATE CONVERSATIONS
+
+                <span class="eyebrow-line"></span>
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <h1>
+                Talk privately.
+                <br />
+                <span>Stay connected.</span>
+            </h1>
+
+
+            <!-- DESCRIPTION -->
+
+            <p class="hero-description">
+                Create a private room, share one invite link,
+                and start a real-time conversation instantly.
+            </p>
+
+
+            <!-- =====================================================
+                 CREATE ROOM CARD
+                 ===================================================== -->
+
+            <section class="create-card">
+
+                <!-- CARD HEADER -->
+
+                <div class="card-header">
+
+                    <div>
+
+                        <div class="card-kicker">
+                            NEW CONVERSATION
+                        </div>
+
+                        <h2>
+                            Create your private room
+                        </h2>
+
+                    </div>
+
+
+                    <div class="secure-badge">
+
+                        <span>🔒</span>
+
+                        Secure room
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     FORM
+                     ================================================= -->
+
+                <div class="create-form">
+
+                    <label for="displayName">
+                        Your display name
+                    </label>
+
+
+                    <div class="input-wrap">
+
+                        <span class="input-icon">
+                            ✦
+                        </span>
+
+
+                        <input id="displayName"
+                               @bind="name"
+                               @bind:event="oninput"
+                               maxlength="40"
+                               autocomplete="off"
+                               placeholder="e.g. Manish"
+                               @onkeydown="HandleNameKeyDown" />
+
+
+                        @if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            <span class="input-valid">
+                                ✓
+                            </span>
+                        }
+
+                    </div>
+
+
+                    <!-- ERROR -->
+                    @if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        <div class="create-error">
+
+                            <span>
+                                !
+                            </span>
+
+                            @error
+
+                        </div>
+                    }
+
+
+                    <!-- CREATE BUTTON -->
+
+                    <button class="create-button"
+                            @onclick="CreateRoom"
+                            disabled="@string.IsNullOrWhiteSpace(name)">
+
+                        <span>
+                            Start private chat
+                        </span>
+
+                        <span class="button-arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                    <!-- NOTE -->
+
+                    <div class="card-note">
+                        No account required · Free to use
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 FEATURE ROW
+                 ===================================================== -->
+
+            <div class="feature-row">
+
+                <!-- FEATURE 1 -->
+
+                <div class="feature-item">
+
+                    <div class="feature-icon">
+                        ⚡
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Real-time
+                        </strong>
+
+                        <span>
+                            Messages appear instantly
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="feature-divider"></div>
+
+
+                <!-- FEATURE 2 -->
+
+                <div class="feature-item">
+
+                    <div class="feature-icon">
+                        🔗
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            One invite link
+                        </strong>
+
+                        <span>
+                            Share it with one person
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="feature-divider"></div>
+
+
+                <!-- FEATURE 3 -->
+
+                <div class="feature-item">
+
+                    <div class="feature-icon">
+                        💾
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Messages saved
+                        </strong>
+
+                        <span>
+                            Come back to your room later
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =====================================================
+                 FOOTER
+                 ===================================================== -->
+
+            <div class="hero-footer">
+
+                <span>
+                    Built for simple conversations.
+                </span>
+
+                <span class="footer-dot">
+                    •
+                </span>
+
+                <span>
+                    No unnecessary setup.
+                </span>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+
+@code {
+
+    // ============================================================
+    // STATE
+    // ============================================================
+
+    private string name = string.Empty;
+
+    private string? error;
+
+
+
+    // ============================================================
+    // ENTER KEY
+    // ============================================================
+
+    private async Task HandleNameKeyDown(
+        KeyboardEventArgs e)
+    {
+        /*
+         * Pressing Enter inside the name input
+         * should do exactly the same thing as clicking
+         * "Start private chat".
+         */
+
+        if (e.Key == "Enter")
+        {
+            await CreateRoom();
+        }
+    }
+
+
+
+    // ============================================================
+    // CREATE ROOM
+    // ============================================================
+
+    private async Task CreateRoom()
+    {
+        error = null;
+
+
+        var displayName =
+            name.Trim();
+
+
+        // --------------------------------------------------------
+        // VALIDATION
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            error =
+                "Enter your display name first.";
+
+            return;
+        }
+
+
+        if (displayName.Length < 2)
+        {
+            error =
+                "Name must be at least 2 characters.";
+
+            return;
+        }
+
+
+        if (displayName.Length > 40)
+        {
+            error =
+                "Name cannot be longer than 40 characters.";
+
+            return;
+        }
+
+
+        // --------------------------------------------------------
+        // CREATE ROOM
+        // --------------------------------------------------------
+
+        try
+        {
+            var roomCode =
+                await ChatService.CreateRoomAsync();
+
+
+            // ----------------------------------------------------
+            // GO DIRECTLY INTO CHAT
+            // ----------------------------------------------------
+
+            Navigation.NavigateTo(
+                $"/chat/{roomCode}?name={Uri.EscapeDataString(displayName)}");
+        }
+        catch (Exception ex)
+        {
+            error =
+                $"Unable to create your private room: {ex.Message}";
+        }
+    }
+}
