@@ -13,10 +13,15 @@ public sealed class ChatDbContext(
     public DbSet<MessageHiddenForUser> MessageHiddenForUsers =>
         Set<MessageHiddenForUser>();
 
+    public DbSet<MessageReaction> MessageReactions =>
+        Set<MessageReaction>();
+
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
 
         // ========================================================
         // CHAT ROOM
@@ -28,6 +33,7 @@ public sealed class ChatDbContext(
         modelBuilder.Entity<ChatRoom>()
             .HasIndex(x => x.Code)
             .IsUnique();
+
 
         // ========================================================
         // CHAT MESSAGE
@@ -46,8 +52,9 @@ public sealed class ChatDbContext(
         modelBuilder.Entity<ChatMessage>()
             .HasIndex(x => x.ReplyToMessageId);
 
+
         // ========================================================
-        // HIDDEN MESSAGE FOR USER
+        // DELETE FOR ME
         // ========================================================
 
         modelBuilder.Entity<MessageHiddenForUser>()
@@ -62,6 +69,28 @@ public sealed class ChatDbContext(
             .IsUnique();
 
         modelBuilder.Entity<MessageHiddenForUser>()
+            .HasIndex(x => x.UserName);
+
+
+        // ========================================================
+        // MESSAGE REACTIONS
+        // ========================================================
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasKey(x => x.Id);
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasIndex(x => new
+            {
+                x.MessageId,
+                x.UserName
+            })
+            .IsUnique();
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasIndex(x => x.MessageId);
+
+        modelBuilder.Entity<MessageReaction>()
             .HasIndex(x => x.UserName);
     }
 }
@@ -103,6 +132,7 @@ public sealed class ChatMessage
     public DateTime SentAt { get; set; } =
         DateTime.UtcNow;
 
+
     // ============================================================
     // READ STATUS
     // ============================================================
@@ -110,6 +140,7 @@ public sealed class ChatMessage
     public bool IsRead { get; set; }
 
     public DateTime? ReadAt { get; set; }
+
 
     // ============================================================
     // REPLY
@@ -120,6 +151,7 @@ public sealed class ChatMessage
     public string? ReplyToSender { get; set; }
 
     public string? ReplyToText { get; set; }
+
 
     // ============================================================
     // DELETE / UNSEND
@@ -147,5 +179,26 @@ public sealed class MessageHiddenForUser
         string.Empty;
 
     public DateTime HiddenAt { get; set; } =
+        DateTime.UtcNow;
+}
+
+
+// =================================================================
+// MESSAGE REACTION
+// =================================================================
+
+public sealed class MessageReaction
+{
+    public long Id { get; set; }
+
+    public long MessageId { get; set; }
+
+    public string UserName { get; set; } =
+        string.Empty;
+
+    public string Reaction { get; set; } =
+        string.Empty;
+
+    public DateTime CreatedAt { get; set; } =
         DateTime.UtcNow;
 }

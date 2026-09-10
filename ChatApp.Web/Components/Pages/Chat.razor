@@ -13,7 +13,6 @@
 
 <PageTitle>Private Chat</PageTitle>
 
-
 @if (!hasJoined)
 {
     <!-- ============================================================
@@ -25,7 +24,6 @@
         <div class="join-card">
 
             <div class="join-brand">
-
                 <div class="join-brand-icon">
                     🔒
                 </div>
@@ -33,7 +31,6 @@
                 <div class="join-brand-name">
                     Chat<span>App</span>
                 </div>
-
             </div>
 
             <div class="room-badge">
@@ -87,11 +84,7 @@
                 @if (!string.IsNullOrWhiteSpace(joinError))
                 {
                     <div class="join-error">
-
-                        <span>
-                            !
-                        </span>
-
+                        <span>!</span>
                         @joinError
                     </div>
                 }
@@ -144,27 +137,11 @@
             </div>
 
             <div class="join-footer">
-
-                <span>
-                    Real-time messaging
-                </span>
-
-                <span class="footer-separator">
-                    •
-                </span>
-
-                <span>
-                    Private room
-                </span>
-
-                <span class="footer-separator">
-                    •
-                </span>
-
-                <span>
-                    Messages saved
-                </span>
-
+                <span>Real-time messaging</span>
+                <span class="footer-separator">•</span>
+                <span>Private room</span>
+                <span class="footer-separator">•</span>
+                <span>Messages saved</span>
             </div>
 
         </div>
@@ -179,17 +156,13 @@ else
 
     <div class="chat-shell">
 
-        <!-- ========================================================
-             TOP BAR
-             ======================================================== -->
+        <!-- TOP BAR -->
 
         <header class="topbar">
 
             <a class="logo"
                href="/">
-
                 Chat<span>App</span>
-
             </a>
 
             <div class="top-actions">
@@ -244,9 +217,7 @@ else
         </header>
 
 
-        <!-- ========================================================
-             LAYOUT
-             ======================================================== -->
+        <!-- MAIN LAYOUT -->
 
         <main class="chat-layout">
 
@@ -341,12 +312,11 @@ else
                 </div>
 
 
-                <!-- =================================================
-                     MESSAGES
-                     ================================================= -->
+                <!-- MESSAGES -->
 
                 <div class="messages"
-                     @ref="messagesContainer">
+                     @ref="messagesContainer"
+                     @onclick="CloseFloatingActions">
 
                 @if (messages.Count == 0)
                     {
@@ -370,91 +340,40 @@ else
                     {
                         @foreach (var message in messages)
                         {
-                            var mine =
-                            IsMine(message);
+                            var mine = IsMine(message);
 
                             <div class="message-row @(mine ? "mine" : "theirs")"
                                  data-message-id="@message.Id"
-                                 data-is-read="@message.IsRead.ToString().ToLowerInvariant()">
+                                 data-is-read="@message.IsRead.ToString().ToLowerInvariant()"
+                                 @onclick:stopPropagation="true">
 
                                 <!-- =================================================
-                                     MESSAGE ACTIONS
+                                     REACTION PICKER
                                      ================================================= -->
+                                @if (reactionPickerMessageId == message.Id &&
+                                                    !message.IsDeleted)
+                                {
+                                    <div class="reaction-picker"
+                                         @onclick:stopPropagation="true">
 
-                                <div class="message-hover-actions">
-
-                                    <button type="button"
-                                            class="reply-message-button"
-                                            @onclick="() => StartReply(message)"
-                                            title="Reply to this message">
-
-                                        <span class="reply-message-icon">
-                                            ↩
-                                        </span>
-
-                                        <span>
-                                            Reply
-                                        </span>
-
-                                    </button>
-
-                                    <div class="message-menu-wrap">
-
-                                        <button type="button"
-                                                class="message-menu-button"
-                                                @onclick="() => ToggleMessageMenu(message.Id)"
-                                                title="Message options">
-
-                                            ⋯
-
-                                        </button>
-
-                                        @if (openMenuMessageId == message.Id)
+                                        @foreach (var reaction in ReactionOptions)
                                         {
-                                            <div class="message-action-menu"
-                                                 @onclick:stopPropagation="true">
+                                            <button type="button"
+                                                    class="reaction-picker-button @(HasUserReaction(message, reaction) ? "selected" : "")"
+                                                    @onclick="() => ReactToMessage(message, reaction)"
+                                                    title="React with @reaction">
 
-                                                <button type="button"
-                                                        class="message-action-item"
-                                                        @onclick="() => AskDeleteForMe(message)">
+                                                @reaction
 
-                                                    <span class="message-action-icon">
-                                                        ◯
-                                                    </span>
-
-                                                    <span>
-                                                        Delete for me
-                                                    </span>
-
-                                                </button>
-
-                                                @if (mine && !message.IsDeleted)
-                                                {
-                                                    <button type="button"
-                                                            class="message-action-item danger"
-                                                            @onclick="() => AskUnsend(message)">
-
-                                                        <span class="message-action-icon">
-                                                            ↶
-                                                        </span>
-
-                                                        <span>
-                                                            Unsend
-                                                        </span>
-
-                                                    </button>
-                                                }
-
-                                            </div>
+                                            </button>
                                         }
 
                                     </div>
-
-                                </div>
+                                }
 
 
                                 <!-- =================================================
-                                     BUBBLE
+                                     MESSAGE BUBBLE
                                      ================================================= -->
 
                                 <div class="bubble">
@@ -475,9 +394,7 @@ else
                                     }
                                     else
                                     {
-                                        <!-- =================================================
-                                             QUOTED REPLY
-                                             ================================================= -->
+                                        <!-- REPLY QUOTE -->
                                         @if (message.ReplyToMessageId.HasValue &&
                                                                 !string.IsNullOrWhiteSpace(message.ReplyToText))
                                         {
@@ -500,6 +417,7 @@ else
                                             </div>
                                         }
 
+
                                         <!-- SENDER -->
                                         @if (!mine)
                                         {
@@ -508,10 +426,41 @@ else
                                             </strong>
                                         }
 
-                                        <!-- MESSAGE TEXT -->
+
+                                        <!-- TEXT -->
 
                                         <div class="message-text">
                                             @message.Text
+                                        </div>
+                                    }
+
+
+                                    <!-- =================================================
+                                         REACTIONS
+                                         ================================================= -->
+                                    @if (!message.IsDeleted &&
+                                                            message.ReactionItems.Count > 0)
+                                    {
+                                        <div class="message-reactions">
+
+                                            @foreach (var group in GetReactionGroups(message))
+                                            {
+                                                <button type="button"
+                                                        class="reaction-chip @(group.IsMine ? "mine" : "")"
+                                                        @onclick="() => ReactToMessage(message, group.Reaction)"
+                                                        title="@group.UsersText">
+
+                                                    <span class="reaction-emoji">
+                                                        @group.Reaction
+                                                    </span>
+
+                                                    <span class="reaction-count">
+                                                        @group.Count
+                                                    </span>
+
+                                                </button>
+                                            }
+
                                         </div>
                                     }
 
@@ -556,6 +505,102 @@ else
 
                                 </div>
 
+
+                                <!-- =================================================
+                                     MESSAGE ACTIONS
+                                     ================================================= -->
+                                @if (!message.IsDeleted)
+                                {
+                                    <div class="message-hover-actions"
+                                         @onclick:stopPropagation="true">
+
+                                        <button type="button"
+                                                class="message-tool-button reaction-trigger"
+                                                @onclick="() => ToggleReactionPicker(message.Id)"
+                                                title="React to this message">
+
+                                            <span class="message-tool-icon">
+                                                😊
+                                            </span>
+
+                                            <span class="message-tool-label">
+                                                React
+                                            </span>
+
+                                        </button>
+
+
+                                        <button type="button"
+                                                class="reply-message-button"
+                                                @onclick="() => StartReply(message)"
+                                                title="Reply to this message">
+
+                                            <span class="reply-message-icon">
+                                                ↩
+                                            </span>
+
+                                            <span>
+                                                Reply
+                                            </span>
+
+                                        </button>
+
+
+                                        <div class="message-menu-wrap">
+
+                                            <button type="button"
+                                                    class="message-menu-button"
+                                                    @onclick="() => ToggleMessageMenu(message.Id)"
+                                                    title="Message options">
+
+                                                ⋯
+
+                                            </button>
+
+                                            @if (openMenuMessageId == message.Id)
+                                            {
+                                                <div class="message-action-menu"
+                                                     @onclick:stopPropagation="true">
+
+                                                    <button type="button"
+                                                            class="message-action-item"
+                                                            @onclick="() => AskDeleteForMe(message)">
+
+                                                        <span class="message-action-icon">
+                                                            ◯
+                                                        </span>
+
+                                                        <span>
+                                                            Delete for me
+                                                        </span>
+
+                                                    </button>
+
+                                                    @if (mine)
+                                                    {
+                                                        <button type="button"
+                                                                class="message-action-item danger"
+                                                                @onclick="() => AskUnsend(message)">
+
+                                                            <span class="message-action-icon">
+                                                                ↶
+                                                            </span>
+
+                                                            <span>
+                                                                Unsend
+                                                            </span>
+
+                                                        </button>
+                                                    }
+
+                                                </div>
+                                            }
+
+                                        </div>
+
+                                    </div>
+                                }
+
                             </div>
                         }
                     }
@@ -563,9 +608,7 @@ else
                 </div>
 
 
-                <!-- ==================================================
-                     TYPING
-                     ================================================== -->
+                <!-- TYPING -->
                 @if (!string.IsNullOrWhiteSpace(typingUser))
                 {
                     <div class="typing">
@@ -584,9 +627,7 @@ else
                 }
 
 
-                <!-- ==================================================
-                     REPLY PREVIEW
-                     ================================================== -->
+                <!-- REPLY PREVIEW -->
                 @if (replyingTo is not null)
                 {
                     <div class="reply-preview">
@@ -622,9 +663,7 @@ else
                 }
 
 
-                <!-- ==================================================
-                     COMPOSER
-                     ================================================== -->
+                <!-- COMPOSER -->
 
                 <footer class="composer">
 
@@ -655,9 +694,7 @@ else
     </div>
 
 
-    <!-- ============================================================
-         TOAST
-         ============================================================ -->
+    <!-- TOAST -->
     @if (showToast)
     {
         <div class="toast">
@@ -666,9 +703,7 @@ else
     }
 
 
-    <!-- ============================================================
-         LEAVE MODAL
-         ============================================================ -->
+    <!-- LEAVE MODAL -->
     @if (showLeaveModal)
     {
         <div class="leave-modal-backdrop"
@@ -737,10 +772,9 @@ else
     }
 
 
-    <!-- ============================================================
-         DELETE MODAL
-         ============================================================ -->
-    @if (showDeleteModal && selectedMessage is not null)
+    <!-- DELETE MODAL -->
+    @if (showDeleteModal &&
+             selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -749,14 +783,16 @@ else
                  @onclick:stopPropagation="true">
 
                 <div class="delete-modal-icon">
+
                     @if (deleteMode == DeleteMode.Unsend)
                     {
-                        
-                        }
+                        <span>↶</span>
+                    }
                     else
                     {
-                        
-                        }
+                        <span>◯</span>
+                    }
+
                 </div>
 
                 <div class="delete-modal-content">
@@ -896,10 +932,12 @@ else
 
 
     // ============================================================
-    // DELETE STATE
+    // MENU / DELETE / REACTION STATE
     // ============================================================
 
     private long? openMenuMessageId;
+
+    private long? reactionPickerMessageId;
 
     private MessageVm? selectedMessage;
 
@@ -909,6 +947,21 @@ else
 
     private DeleteMode deleteMode =
         DeleteMode.DeleteForMe;
+
+
+    // ============================================================
+    // REACTION OPTIONS
+    // ============================================================
+
+    private static readonly string[] ReactionOptions =
+    {
+        "👍",
+        "❤️",
+        "😂",
+        "😮",
+        "😢",
+        "👎"
+    };
 
 
     // ============================================================
@@ -988,14 +1041,17 @@ else
                     .Trim()
                     .ToLowerInvariant();
 
+
             var uri =
                 Navigation.ToAbsoluteUri(
                     Navigation.Uri);
+
 
             var query =
                 Microsoft.AspNetCore.WebUtilities
                     .QueryHelpers
                     .ParseQuery(uri.Query);
+
 
             if (query.TryGetValue(
                     "name",
@@ -1005,9 +1061,11 @@ else
                     queryName.ToString();
             }
 
+
             var exists =
                 await ChatService.RoomExistsAsync(
                     RoomCode);
+
 
             if (!exists)
             {
@@ -1016,10 +1074,13 @@ else
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(QueryName))
+
+            if (!string.IsNullOrWhiteSpace(
+                    QueryName))
             {
                 var existingName =
                     QueryName.Trim();
+
 
                 if (existingName.Length > 40)
                 {
@@ -1027,13 +1088,18 @@ else
                         existingName[..40];
                 }
 
-                if (!string.IsNullOrWhiteSpace(existingName))
+
+                if (!string.IsNullOrWhiteSpace(
+                        existingName))
                 {
-                    name = existingName;
+                    name =
+                        existingName;
 
-                    joinName = existingName;
+                    joinName =
+                        existingName;
 
-                    hasJoined = true;
+                    hasJoined =
+                        true;
 
                     await InitializeChatAsync();
                 }
@@ -1041,9 +1107,11 @@ else
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error =
+                ex.Message;
 
-            joinError = ex.Message;
+            joinError =
+                ex.Message;
         }
     }
 
@@ -1058,16 +1126,20 @@ else
 
         error = null;
 
+
         var enteredName =
             joinName.Trim();
 
-        if (string.IsNullOrWhiteSpace(enteredName))
+
+        if (string.IsNullOrWhiteSpace(
+                enteredName))
         {
             joinError =
                 "Please enter your name.";
 
             return;
         }
+
 
         if (enteredName.Length < 2)
         {
@@ -1077,6 +1149,7 @@ else
             return;
         }
 
+
         if (enteredName.Length > 40)
         {
             joinError =
@@ -1085,15 +1158,21 @@ else
             return;
         }
 
-        isJoining = true;
+
+        isJoining =
+            true;
+
 
         try
         {
-            name = enteredName;
+            name =
+                enteredName;
+
 
             var exists =
                 await ChatService.RoomExistsAsync(
                     RoomCode);
+
 
             if (!exists)
             {
@@ -1103,23 +1182,29 @@ else
                 return;
             }
 
-            hasJoined = true;
+
+            hasJoined =
+                true;
+
 
             await InvokeAsync(
                 StateHasChanged);
+
 
             await InitializeChatAsync();
         }
         catch (Exception ex)
         {
-            hasJoined = false;
+            hasJoined =
+                false;
 
             joinError =
                 $"Unable to join chat: {ex.Message}";
         }
         finally
         {
-            isJoining = false;
+            isJoining =
+                false;
         }
     }
 
@@ -1131,7 +1216,8 @@ else
     private async Task HandleJoinKeyDown(
         KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
+        if (e.Key ==
+            "Enter")
         {
             await JoinChat();
         }
@@ -1139,7 +1225,7 @@ else
 
 
     // ============================================================
-    // SIGNALR
+    // INITIALIZE SIGNALR
     // ============================================================
 
     private async Task InitializeChatAsync()
@@ -1148,6 +1234,7 @@ else
         {
             return;
         }
+
 
         // --------------------------------------------------------
         // HISTORY
@@ -1158,7 +1245,9 @@ else
                 RoomCode,
                 name);
 
+
         messages.Clear();
+
 
         foreach (var item in history)
         {
@@ -1173,6 +1262,43 @@ else
                     item.ReplyToSender,
                     item.ReplyToText,
                     item.IsDeleted));
+        }
+
+
+        // --------------------------------------------------------
+        // REACTIONS FROM DATABASE
+        // --------------------------------------------------------
+
+        var reactionMap =
+            await ChatService.GetReactionsAsync(
+                messages.Select(x => x.Id));
+
+
+        for (var i = 0;
+             i < messages.Count;
+             i++)
+        {
+            var message =
+                messages[i];
+
+
+            if (reactionMap.TryGetValue(
+                    message.Id,
+                    out var reactionList))
+            {
+                messages[i] =
+                    message with
+                    {
+                        Reactions =
+                            reactionList
+                                .Select(
+                                    x =>
+                                        new ReactionVm(
+                                            x.UserName,
+                                            x.Reaction))
+                                .ToList()
+                    };
+            }
         }
 
 
@@ -1200,15 +1326,64 @@ else
                 await InvokeAsync(() =>
                 {
                     if (messages.All(
-                            x => x.Id != message.Id))
+                            x =>
+                                x.Id != message.Id))
                     {
-                        messages.Add(message);
+                        messages.Add(
+                            message with
+                            {
+                                Reactions =
+                                    message.Reactions ??
+                                    new List<ReactionVm>()
+                            });
                     }
 
                     StateHasChanged();
                 });
 
+
                 await ScrollToBottomAsync();
+            });
+
+
+        // --------------------------------------------------------
+        // REACTION CHANGED
+        // --------------------------------------------------------
+
+        hub.On<long, List<ReactionVm>>(
+            "MessageReactionChanged",
+            async (messageId, reactions) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var index =
+                        messages.FindIndex(
+                            x =>
+                                x.Id == messageId);
+
+
+                    if (index >= 0)
+                    {
+                        var message =
+                            messages[index];
+
+
+                        messages[index] =
+                            message with
+                            {
+                                Reactions =
+                                    reactions ??
+                                    new List<ReactionVm>()
+                            };
+                    }
+
+
+                    reactionPickerMessageId =
+                        null;
+
+
+                    StateHasChanged();
+                });
             });
 
 
@@ -1224,24 +1399,31 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x => x.Id == messageId);
+                            x =>
+                                x.Id == messageId);
+
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
 
+
                         messages[index] =
                             message with
                             {
-                                IsRead = true
+                                IsRead =
+                                    true
                             };
+
 
                         seenTimes[messageId] =
                             DateTime.UtcNow;
                     }
 
+
                     StartSeenTimer();
+
 
                     StateHasChanged();
                 });
@@ -1266,10 +1448,12 @@ else
                         return;
                     }
 
+
                     typingUser =
                         isTyping
                             ? sender
                             : null;
+
 
                     StateHasChanged();
                 });
@@ -1288,14 +1472,23 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x => x.Id == messageId);
+                            x =>
+                                x.Id == messageId);
+
 
                     if (index >= 0)
                     {
                         messages.RemoveAt(index);
                     }
 
-                    openMenuMessageId = null;
+
+                    openMenuMessageId =
+                        null;
+
+
+                    reactionPickerMessageId =
+                        null;
+
 
                     StateHasChanged();
                 });
@@ -1314,12 +1507,15 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x => x.Id == messageId);
+                            x =>
+                                x.Id == messageId);
+
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
+
 
                         messages[index] =
                             message with
@@ -1327,17 +1523,31 @@ else
                                 Text =
                                     "[This message was deleted]",
 
-                                ReplyToMessageId = null,
+                                ReplyToMessageId =
+                                    null,
 
-                                ReplyToSender = null,
+                                ReplyToSender =
+                                    null,
 
-                                ReplyToText = null,
+                                ReplyToText =
+                                    null,
 
-                                IsDeleted = true
+                                IsDeleted =
+                                    true,
+
+                                Reactions =
+                                    new List<ReactionVm>()
                             };
                     }
 
-                    openMenuMessageId = null;
+
+                    openMenuMessageId =
+                        null;
+
+
+                    reactionPickerMessageId =
+                        null;
+
 
                     StateHasChanged();
                 });
@@ -1350,7 +1560,9 @@ else
 
         hub.Reconnecting += _ =>
         {
-            connected = false;
+            connected =
+                false;
+
 
             return InvokeAsync(
                 StateHasChanged);
@@ -1368,18 +1580,23 @@ else
                 return;
             }
 
+
             try
             {
                 await hub.InvokeAsync(
                     "JoinRoom",
                     RoomCode);
 
-                connected = true;
+
+                connected =
+                    true;
             }
             catch
             {
-                connected = false;
+                connected =
+                    false;
             }
+
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1392,7 +1609,9 @@ else
 
         hub.Closed += _ =>
         {
-            connected = false;
+            connected =
+                false;
+
 
             return InvokeAsync(
                 StateHasChanged);
@@ -1405,16 +1624,22 @@ else
 
         await hub.StartAsync();
 
+
         await hub.InvokeAsync(
             "JoinRoom",
             RoomCode);
 
-        connected = true;
+
+        connected =
+            true;
+
 
         StartSeenTimer();
 
+
         await InvokeAsync(
             StateHasChanged);
+
 
         await ScrollToBottomAsync();
     }
@@ -1435,6 +1660,7 @@ else
             return;
         }
 
+
         try
         {
             await hub.InvokeAsync(
@@ -1450,7 +1676,7 @@ else
 
 
     // ============================================================
-    // START REPLY
+    // REPLY
     // ============================================================
 
     private async Task StartReply(
@@ -1461,12 +1687,22 @@ else
             return;
         }
 
-        replyingTo = message;
 
-        openMenuMessageId = null;
+        replyingTo =
+            message;
+
+
+        openMenuMessageId =
+            null;
+
+
+        reactionPickerMessageId =
+            null;
+
 
         await InvokeAsync(
             StateHasChanged);
+
 
         try
         {
@@ -1479,19 +1715,12 @@ else
     }
 
 
-    // ============================================================
-    // CANCEL REPLY
-    // ============================================================
-
     private void CancelReply()
     {
-        replyingTo = null;
+        replyingTo =
+            null;
     }
 
-
-    // ============================================================
-    // REPLY PREVIEW
-    // ============================================================
 
     private string GetReplyPreview(
         string? text)
@@ -1501,16 +1730,19 @@ else
             return string.Empty;
         }
 
+
         var cleanText =
             text
                 .Replace("\r", " ")
                 .Replace("\n", " ")
                 .Trim();
 
+
         if (cleanText.Length <= 90)
         {
             return cleanText;
         }
+
 
         return cleanText[..90] + "…";
     }
@@ -1523,37 +1755,210 @@ else
     private void ToggleMessageMenu(
         long messageId)
     {
-        if (openMenuMessageId == messageId)
+        reactionPickerMessageId =
+            null;
+
+
+        if (openMenuMessageId ==
+            messageId)
         {
-            openMenuMessageId = null;
+            openMenuMessageId =
+                null;
         }
         else
         {
-            openMenuMessageId = messageId;
+            openMenuMessageId =
+                messageId;
         }
     }
 
 
     // ============================================================
-    // DELETE FOR ME MODAL
+    // REACTION PICKER
+    // ============================================================
+
+    private void ToggleReactionPicker(
+        long messageId)
+    {
+        openMenuMessageId =
+            null;
+
+
+        if (reactionPickerMessageId ==
+            messageId)
+        {
+            reactionPickerMessageId =
+                null;
+        }
+        else
+        {
+            reactionPickerMessageId =
+                messageId;
+        }
+    }
+
+
+    // ============================================================
+    // REACT
+    // ============================================================
+
+    private async Task ReactToMessage(
+        MessageVm message,
+        string reaction)
+    {
+        if (message.IsDeleted ||
+            hub is null ||
+            !connected)
+        {
+            return;
+        }
+
+
+        try
+        {
+            await hub.InvokeAsync(
+                "ToggleReaction",
+                RoomCode,
+                message.Id,
+                name,
+                reaction);
+
+
+            reactionPickerMessageId =
+                null;
+        }
+        catch (Exception ex)
+        {
+            error =
+                $"Unable to react: {ex.Message}";
+        }
+
+
+        await InvokeAsync(
+            StateHasChanged);
+    }
+
+
+    // ============================================================
+    // CHECK USER REACTION
+    // ============================================================
+
+    private bool HasUserReaction(
+        MessageVm message,
+        string reaction)
+    {
+        return message.ReactionItems.Any(
+            x =>
+                x.UserName.Equals(
+                    name,
+                    StringComparison.OrdinalIgnoreCase) &&
+                x.Reaction ==
+                    reaction);
+    }
+
+
+    // ============================================================
+    // REACTION GROUPS
+    // ============================================================
+
+    private IEnumerable<ReactionGroupVm>
+        GetReactionGroups(
+            MessageVm message)
+    {
+        return message.ReactionItems
+            .GroupBy(
+                x =>
+                    x.Reaction)
+            .Select(
+                group =>
+                {
+                    var users =
+                        group
+                            .Select(
+                                x =>
+                                    x.UserName)
+                            .Distinct(
+                                StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+
+                    var isMine =
+                        users.Any(
+                            x =>
+                                x.Equals(
+                                    name,
+                                    StringComparison.OrdinalIgnoreCase));
+
+
+                    var usersText =
+                        users.Count switch
+                        {
+                            0 =>
+                                string.Empty,
+
+                            <= 3 =>
+                                string.Join(
+                                    ", ",
+                                    users),
+
+                            _ =>
+                                $"{users.Count} people reacted"
+                        };
+
+
+                    return new ReactionGroupVm(
+                        group.Key,
+                        group.Count(),
+                        isMine,
+                        usersText);
+                });
+    }
+
+
+    // ============================================================
+    // CLOSE FLOATING ACTIONS
+    // ============================================================
+
+    private void CloseFloatingActions()
+    {
+        openMenuMessageId =
+            null;
+
+        reactionPickerMessageId =
+            null;
+    }
+
+
+    // ============================================================
+    // DELETE FOR ME
     // ============================================================
 
     private void AskDeleteForMe(
         MessageVm message)
     {
-        selectedMessage = message;
+        selectedMessage =
+            message;
+
 
         deleteMode =
             DeleteMode.DeleteForMe;
 
-        showDeleteModal = true;
 
-        openMenuMessageId = null;
+        showDeleteModal =
+            true;
+
+
+        openMenuMessageId =
+            null;
+
+
+        reactionPickerMessageId =
+            null;
     }
 
 
     // ============================================================
-    // UNSEND MODAL
+    // UNSEND
     // ============================================================
 
     private void AskUnsend(
@@ -1565,14 +1970,25 @@ else
             return;
         }
 
-        selectedMessage = message;
+
+        selectedMessage =
+            message;
+
 
         deleteMode =
             DeleteMode.Unsend;
 
-        showDeleteModal = true;
 
-        openMenuMessageId = null;
+        showDeleteModal =
+            true;
+
+
+        openMenuMessageId =
+            null;
+
+
+        reactionPickerMessageId =
+            null;
     }
 
 
@@ -1587,9 +2003,14 @@ else
             return;
         }
 
-        showDeleteModal = false;
 
-        selectedMessage = null;
+        showDeleteModal =
+            false;
+
+
+        selectedMessage =
+            null;
+
 
         deleteMode =
             DeleteMode.DeleteForMe;
@@ -1609,14 +2030,19 @@ else
             return;
         }
 
-        isDeleting = true;
+
+        isDeleting =
+            true;
+
 
         var messageId =
             selectedMessage.Id;
 
+
         try
         {
-            if (deleteMode == DeleteMode.DeleteForMe)
+            if (deleteMode ==
+                DeleteMode.DeleteForMe)
             {
                 await hub.InvokeAsync(
                     "DeleteMessageForMe",
@@ -1624,9 +2050,13 @@ else
                     messageId,
                     name);
 
-                showDeleteModal = false;
 
-                selectedMessage = null;
+                showDeleteModal =
+                    false;
+
+
+                selectedMessage =
+                    null;
             }
             else
             {
@@ -1636,10 +2066,15 @@ else
                     messageId,
                     name);
 
-                showDeleteModal = false;
 
-                selectedMessage = null;
+                showDeleteModal =
+                    false;
+
+
+                selectedMessage =
+                    null;
             }
+
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1649,16 +2084,22 @@ else
             error =
                 $"Unable to delete message: {ex.Message}";
 
-            showDeleteModal = false;
 
-            selectedMessage = null;
+            showDeleteModal =
+                false;
+
+
+            selectedMessage =
+                null;
+
 
             await InvokeAsync(
                 StateHasChanged);
         }
         finally
         {
-            isDeleting = false;
+            isDeleting =
+                false;
         }
     }
 
@@ -1675,16 +2116,19 @@ else
             return string.Empty;
         }
 
+
         var cleanText =
             text
                 .Replace("\r", " ")
                 .Replace("\n", " ")
                 .Trim();
 
+
         if (cleanText.Length <= 100)
         {
             return cleanText;
         }
+
 
         return cleanText[..100] + "…";
     }
@@ -1705,11 +2149,13 @@ else
             return;
         }
 
+
         if (hub is null ||
             !connected)
         {
             return;
         }
+
 
         try
         {
@@ -1723,15 +2169,19 @@ else
         {
         }
 
+
         typingCts?.Cancel();
 
         typingCts?.Dispose();
 
+
         typingCts =
             new CancellationTokenSource();
 
-        _ = StopTypingLaterAsync(
-            typingCts.Token);
+
+        _ =
+            StopTypingLaterAsync(
+                typingCts.Token);
     }
 
 
@@ -1748,12 +2198,14 @@ else
                 900,
                 token);
 
+
             if (token.IsCancellationRequested ||
                 hub is null ||
                 !connected)
             {
                 return;
             }
+
 
             try
             {
@@ -1788,18 +2240,22 @@ else
             return;
         }
 
+
         if (string.IsNullOrWhiteSpace(draft))
         {
             return;
         }
 
+
         var text =
             draft.Trim();
+
 
         if (string.IsNullOrWhiteSpace(text))
         {
             return;
         }
+
 
         if (text.Length > 2000)
         {
@@ -1807,11 +2263,14 @@ else
                 text[..2000];
         }
 
-        // Capture reply before clearing.
+
         var replyId =
             replyingTo?.Id;
 
-        draft = string.Empty;
+
+        draft =
+            string.Empty;
+
 
         try
         {
@@ -1822,23 +2281,33 @@ else
                 text,
                 replyId);
 
-            typingUser = null;
+
+            typingUser =
+                null;
+
 
             typingCts?.Cancel();
 
-            replyingTo = null;
+
+            replyingTo =
+                null;
+
 
             await InvokeAsync(
                 StateHasChanged);
+
 
             await ScrollToBottomAsync();
         }
         catch (Exception ex)
         {
-            draft = text;
+            draft =
+                text;
+
 
             error =
                 $"Unable to send message: {ex.Message}";
+
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1858,18 +2327,26 @@ else
                 "navigator.clipboard.writeText",
                 InviteUrl);
 
+
             toastMessage =
                 "Invite link copied";
 
-            showToast = true;
+
+            showToast =
+                true;
+
 
             await InvokeAsync(
                 StateHasChanged);
 
+
             await Task.Delay(
                 1500);
 
-            showToast = false;
+
+            showToast =
+                false;
+
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1888,7 +2365,8 @@ else
     {
         if (!isLeaving)
         {
-            showLeaveModal = true;
+            showLeaveModal =
+                true;
         }
     }
 
@@ -1897,7 +2375,8 @@ else
     {
         if (!isLeaving)
         {
-            showLeaveModal = false;
+            showLeaveModal =
+                false;
         }
     }
 
@@ -1913,13 +2392,17 @@ else
             return;
         }
 
-        isLeaving = true;
+
+        isLeaving =
+            true;
+
 
         try
         {
             typingCts?.Cancel();
 
             seenTimerCts?.Cancel();
+
 
             if (hub is not null)
             {
@@ -1931,10 +2414,15 @@ else
                 {
                 }
 
-                hub = null;
+
+                hub =
+                    null;
             }
 
-            connected = false;
+
+            connected =
+                false;
+
 
             Navigation.NavigateTo(
                 "/",
@@ -1942,9 +2430,13 @@ else
         }
         catch
         {
-            isLeaving = false;
+            isLeaving =
+                false;
 
-            showLeaveModal = false;
+
+            showLeaveModal =
+                false;
+
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1959,9 +2451,10 @@ else
     private bool IsMine(
         MessageVm message)
     {
-        return message.Sender.Equals(
-            name,
-            StringComparison.OrdinalIgnoreCase);
+        return
+            message.Sender.Equals(
+                name,
+                StringComparison.OrdinalIgnoreCase);
     }
 
 
@@ -1976,15 +2469,19 @@ else
             return;
         }
 
+
         seenTimerCts =
             new CancellationTokenSource();
+
 
         seenTimer =
             new PeriodicTimer(
                 TimeSpan.FromSeconds(15));
 
-        _ = RunSeenTimerAsync(
-            seenTimerCts.Token);
+
+        _ =
+            RunSeenTimerAsync(
+                seenTimerCts.Token);
     }
 
 
@@ -1995,7 +2492,8 @@ else
         {
             while (
                 seenTimer is not null &&
-                await seenTimer.WaitForNextTickAsync(token))
+                await seenTimer.WaitForNextTickAsync(
+                    token))
             {
                 if (seenTimes.Count > 0)
                 {
@@ -2025,6 +2523,7 @@ else
             return "Sent";
         }
 
+
         if (!seenTimes.TryGetValue(
                 message.Id,
                 out var seenAt))
@@ -2032,13 +2531,16 @@ else
             return "Seen";
         }
 
+
         var elapsed =
             DateTime.UtcNow - seenAt;
+
 
         if (elapsed.TotalSeconds < 60)
         {
             return "Seen just now";
         }
+
 
         if (elapsed.TotalMinutes < 60)
         {
@@ -2048,10 +2550,12 @@ else
                     (int)Math.Floor(
                         elapsed.TotalMinutes));
 
+
             return minutes == 1
                 ? "Seen 1 min ago"
                 : $"Seen {minutes} min ago";
         }
+
 
         if (elapsed.TotalHours < 24)
         {
@@ -2061,10 +2565,12 @@ else
                     (int)Math.Floor(
                         elapsed.TotalHours));
 
+
             return hours == 1
                 ? "Seen 1 hr ago"
                 : $"Seen {hours} hrs ago";
         }
+
 
         if (elapsed.TotalDays < 7)
         {
@@ -2074,10 +2580,12 @@ else
                     (int)Math.Floor(
                         elapsed.TotalDays));
 
+
             return days == 1
                 ? "Seen 1 day ago"
                 : $"Seen {days} days ago";
         }
+
 
         return
             $"Seen {seenAt.ToLocalTime():dd MMM}";
@@ -2096,12 +2604,14 @@ else
             return "Delivered";
         }
 
+
         if (!seenTimes.TryGetValue(
                 message.Id,
                 out var seenAt))
         {
             return "Seen";
         }
+
 
         return
             $"Seen at {seenAt.ToLocalTime():dd MMM yyyy HH:mm}";
@@ -2120,6 +2630,7 @@ else
             dotNetReference =
                 DotNetObjectReference.Create(this);
 
+
             try
             {
                 await JS.InvokeVoidAsync(
@@ -2129,6 +2640,7 @@ else
             {
             }
         }
+
 
         if (hasJoined &&
             connected &&
@@ -2180,6 +2692,7 @@ else
         {
         }
 
+
         try
         {
             seenTimerCts?.Cancel();
@@ -2190,6 +2703,7 @@ else
         {
         }
 
+
         try
         {
             seenTimer?.Dispose();
@@ -2198,6 +2712,7 @@ else
         {
         }
 
+
         try
         {
             dotNetReference?.Dispose();
@@ -2205,6 +2720,7 @@ else
         catch
         {
         }
+
 
         try
         {
@@ -2231,7 +2747,7 @@ else
 
 
     // ============================================================
-    // VIEW MODEL
+    // VIEW MODELS
     // ============================================================
 
     private sealed record MessageVm(
@@ -2243,5 +2759,30 @@ else
         long? ReplyToMessageId,
         string? ReplyToSender,
         string? ReplyToText,
-        bool IsDeleted = false);
+        bool IsDeleted = false,
+        List<ReactionVm>? Reactions = null)
+    {
+        /*
+         * IMPORTANT:
+         * Reactions can come back null from SignalR/database history.
+         * This property guarantees a non-null enumerable.
+         *
+         * This is the fix for CS8604 warnings caused by
+         * Any() and GroupBy() on message.Reactions.
+         */
+        public IReadOnlyList<ReactionVm> ReactionItems =>
+            Reactions ?? [];
+    }
+
+
+    public sealed record ReactionVm(
+        string UserName,
+        string Reaction);
+
+
+    private sealed record ReactionGroupVm(
+        string Reaction,
+        int Count,
+        bool IsMine,
+        string UsersText);
 }

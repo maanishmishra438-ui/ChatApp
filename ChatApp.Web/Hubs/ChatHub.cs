@@ -18,12 +18,14 @@ public sealed class ChatHub(
             roomCode.Trim()
                 .ToLowerInvariant();
 
+
         if (!await chatService.RoomExistsAsync(
                 roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
+
 
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
@@ -45,6 +47,7 @@ public sealed class ChatHub(
             roomCode.Trim()
                 .ToLowerInvariant();
 
+
         var message =
             await chatService.SaveMessageAsync(
                 roomCode,
@@ -52,17 +55,21 @@ public sealed class ChatHub(
                 text,
                 replyToMessageId);
 
+
         await Clients
             .Group(roomCode)
             .SendAsync(
                 "ReceiveMessage",
                 new
                 {
-                    id = message.Id,
+                    id =
+                        message.Id,
 
-                    sender = message.Sender,
+                    sender =
+                        message.Sender,
 
-                    text = message.Text,
+                    text =
+                        message.Text,
 
                     sentAt =
                         message.SentAt.ToString("O"),
@@ -86,7 +93,7 @@ public sealed class ChatHub(
 
 
     // ============================================================
-    // USER TYPING
+    // TYPING
     // ============================================================
 
     public Task UserTyping(
@@ -97,6 +104,7 @@ public sealed class ChatHub(
         roomCode =
             roomCode.Trim()
                 .ToLowerInvariant();
+
 
         return Clients
             .OthersInGroup(roomCode)
@@ -120,6 +128,7 @@ public sealed class ChatHub(
             roomCode.Trim()
                 .ToLowerInvariant();
 
+
         if (!await chatService.RoomExistsAsync(
                 roomCode))
         {
@@ -127,16 +136,19 @@ public sealed class ChatHub(
                 "Room not found.");
         }
 
+
         var marked =
             await chatService.MarkMessageAsReadAsync(
                 roomCode,
                 messageId,
                 readerName);
 
+
         if (!marked)
         {
             return;
         }
+
 
         await Clients
             .Group(roomCode)
@@ -159,6 +171,7 @@ public sealed class ChatHub(
             roomCode.Trim()
                 .ToLowerInvariant();
 
+
         if (!await chatService.RoomExistsAsync(
                 roomCode))
         {
@@ -166,11 +179,13 @@ public sealed class ChatHub(
                 "Room not found.");
         }
 
+
         var deleted =
             await chatService.DeleteForMeAsync(
                 roomCode,
                 messageId,
                 userName);
+
 
         if (!deleted)
         {
@@ -178,7 +193,7 @@ public sealed class ChatHub(
                 "Unable to delete this message.");
         }
 
-        // Notify only the current connection.
+
         await Clients
             .Caller
             .SendAsync(
@@ -188,7 +203,7 @@ public sealed class ChatHub(
 
 
     // ============================================================
-    // DELETE FOR EVERYONE / UNSEND
+    // UNSEND / DELETE FOR EVERYONE
     // ============================================================
 
     public async Task UnsendMessage(
@@ -200,6 +215,7 @@ public sealed class ChatHub(
             roomCode.Trim()
                 .ToLowerInvariant();
 
+
         if (!await chatService.RoomExistsAsync(
                 roomCode))
         {
@@ -207,11 +223,13 @@ public sealed class ChatHub(
                 "Room not found.");
         }
 
+
         var deleted =
             await chatService.DeleteForEveryoneAsync(
                 roomCode,
                 messageId,
                 senderName);
+
 
         if (!deleted)
         {
@@ -219,10 +237,51 @@ public sealed class ChatHub(
                 "You can only unsend your own message.");
         }
 
+
         await Clients
             .Group(roomCode)
             .SendAsync(
                 "MessageUnsent",
                 messageId);
+    }
+
+
+    // ============================================================
+    // TOGGLE REACTION
+    // ============================================================
+
+    public async Task ToggleReaction(
+        string roomCode,
+        long messageId,
+        string userName,
+        string reaction)
+    {
+        roomCode =
+            roomCode.Trim()
+                .ToLowerInvariant();
+
+
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
+        {
+            throw new HubException(
+                "Room not found.");
+        }
+
+
+        var result =
+            await chatService.ToggleReactionAsync(
+                roomCode,
+                messageId,
+                userName,
+                reaction);
+
+
+        await Clients
+            .Group(roomCode)
+            .SendAsync(
+                "MessageReactionChanged",
+                messageId,
+                result.Reactions);
     }
 }
