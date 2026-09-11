@@ -4482,3 +4482,696 @@ a:focus-visible {
         opacity: .55;
     }
 }
+
+/* ================================================================
+   FINAL MOBILE UX POLISH
+   ChatApp - phone / tablet friendly
+   ================================================================ */
+
+@media (max-width: 700px) {
+
+    /* ------------------------------------------------------------
+       APP / VIEWPORT
+       ------------------------------------------------------------ */
+
+    html,
+    body {
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    .chat-page,
+    .chat-shell {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        max-height: 100dvh;
+    }
+
+    .chat-layout {
+        width: 100%;
+        height: calc(100dvh - 58px);
+        min-height: 0;
+    }
+
+    .conversation {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+
+    /* ------------------------------------------------------------
+       MOBILE TOP BAR
+       ------------------------------------------------------------ */
+
+    .topbar {
+        height: 58px;
+        min-height: 58px;
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .logo {
+        flex: 0 0 auto;
+        font-size: 18px;
+    }
+
+    .top-actions {
+        min-width: 0;
+        gap: 6px;
+    }
+
+    .connection {
+        display: inline-flex;
+        font-size: 9px;
+    }
+
+        .connection i {
+            width: 6px;
+            height: 6px;
+            flex-basis: 6px;
+        }
+
+    .share-button,
+    .leave-button {
+        min-height: 38px;
+        height: 38px;
+        border-radius: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .share-button {
+        font-size: 9px;
+        gap: 5px;
+    }
+
+    .share-icon {
+        font-size: 13px;
+    }
+
+    .leave-button {
+        font-size: 9px;
+    }
+
+
+    /* ------------------------------------------------------------
+       CONVERSATION HEADER
+       ------------------------------------------------------------ */
+
+    .conversation-header {
+        height: 60px;
+        min-height: 60px;
+        padding: 0 13px;
+        gap: 10px;
+    }
+
+        .conversation-header > div:first-child {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+    .conversation-title-row {
+        min-width: 0;
+        gap: 6px;
+    }
+
+    .conversation-header h3 {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    .room-private-pill {
+        flex: 0 0 auto;
+        padding: 3px 7px;
+        font-size: 7px;
+    }
+
+    .room-code-label {
+        display: block;
+        max-width: 190px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 8px;
+    }
+
+    .presence-summary {
+        flex: 0 0 auto;
+        font-size: 8px;
+    }
+
+
+    /* ------------------------------------------------------------
+       MESSAGES
+       ------------------------------------------------------------ */
+
+    .messages {
+        width: 100%;
+        min-height: 0;
+        padding: 14px 10px 12px 10px;
+        gap: 2px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        scrollbar-width: none;
+    }
+
+        .messages::-webkit-scrollbar {
+            display: none;
+        }
+
+
+    /* ------------------------------------------------------------
+       MESSAGE ROW
+       ------------------------------------------------------------ */
+
+    .message-row {
+        width: 100%;
+        margin-bottom: 13px;
+        min-width: 0;
+    }
+
+        .message-row.mine {
+            align-items: flex-end;
+        }
+
+        .message-row.theirs {
+            align-items: flex-start;
+        }
+
+
+        /* ------------------------------------------------------------
+       MESSAGE BUBBLE
+       ------------------------------------------------------------ */
+
+        .message-row .bubble {
+            width: auto;
+            min-width: 0;
+            max-width: 88%;
+            padding: 10px 11px 7px;
+            border-radius: 14px;
+        }
+
+    .mine .bubble {
+        border-bottom-right-radius: 5px;
+    }
+
+    .theirs .bubble {
+        border-bottom-left-radius: 5px;
+    }
+
+    .bubble > strong {
+        font-size: 9px;
+        margin-bottom: 3px;
+    }
+
+    .message-text {
+        max-width: 100%;
+        font-size: 13px;
+        line-height: 1.45;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+
+    /* ------------------------------------------------------------
+       MESSAGE FOOTER
+       ------------------------------------------------------------ */
+
+    .message-row .message-footer {
+        min-height: 11px;
+        gap: 4px;
+        margin-top: 5px;
+    }
+
+    .message-footer time,
+    .message-read,
+    .sent-text,
+    .seen-text {
+        font-size: 8px;
+    }
+
+
+    /* ------------------------------------------------------------
+       REPLY QUOTE
+       ------------------------------------------------------------ */
+
+    .quoted-message {
+        max-width: 100%;
+        margin-bottom: 7px;
+        padding: 6px 8px;
+        border-radius: 8px;
+    }
+
+    .quoted-message-sender {
+        font-size: 8px;
+    }
+
+    .quoted-message-text {
+        max-width: 100%;
+        font-size: 9px;
+    }
+
+
+    /* ------------------------------------------------------------
+       REACTION CHIPS
+       ------------------------------------------------------------ */
+
+    .message-row .message-reactions {
+        max-width: 100%;
+        margin-top: 5px;
+        gap: 3px;
+    }
+
+    .message-row .reaction-chip {
+        min-width: 30px;
+        min-height: 25px;
+        height: 25px;
+        padding: 0 7px;
+    }
+
+    .message-row .reaction-emoji {
+        font-size: 12px;
+    }
+
+    .message-row .reaction-count {
+        font-size: 8px;
+    }
+
+
+    /* ------------------------------------------------------------
+       REACTION PICKER
+       ------------------------------------------------------------ */
+
+    .message-row .reaction-picker {
+        max-width: calc(100vw - 20px);
+        margin-top: 6px;
+        padding: 5px;
+        border-radius: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .message-row .reaction-picker-button {
+        width: 37px;
+        min-width: 37px;
+        height: 37px;
+        min-height: 37px;
+        font-size: 18px;
+    }
+
+
+    /* ------------------------------------------------------------
+       MESSAGE ACTIONS
+       ------------------------------------------------------------ */
+
+    /*
+       On touch devices actions are always available in your
+       current design. Make them compact but still touchable.
+    */
+
+    .message-row .message-hover-actions {
+        width: auto;
+        max-width: 100%;
+        margin-top: 5px;
+        gap: 4px;
+        padding: 0;
+    }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button,
+    .message-row .message-menu-button {
+        min-height: 32px;
+        height: 32px;
+    }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button {
+        padding-left: 9px;
+        padding-right: 9px;
+        font-size: 8.5px;
+    }
+
+    .message-row .message-menu-button {
+        width: 34px;
+        min-width: 34px;
+        font-size: 16px;
+    }
+
+    .message-row .message-tool-icon,
+    .message-row .reply-message-icon {
+        font-size: 12px;
+    }
+
+
+    /* ------------------------------------------------------------
+       MESSAGE MENU
+       ------------------------------------------------------------ */
+
+    .message-row .message-action-menu {
+        width: 174px;
+        min-width: 174px;
+        max-width: calc(100vw - 28px);
+        padding: 5px;
+        border-radius: 11px;
+    }
+
+    .message-action-item {
+        min-height: 42px;
+        font-size: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+
+    /* ------------------------------------------------------------
+       TYPING INDICATOR
+       ------------------------------------------------------------ */
+
+    .typing {
+        min-height: 22px;
+        padding: 0 13px 6px 13px;
+        font-size: 9px;
+    }
+
+
+    /* ------------------------------------------------------------
+       REPLY PREVIEW
+       ------------------------------------------------------------ */
+
+    .reply-preview {
+        min-height: 54px;
+        margin: 0 10px 7px 10px;
+        padding: 8px 9px 8px 11px;
+        border-radius: 11px;
+    }
+
+    .reply-preview-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 8px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .reply-preview-label {
+        font-size: 9px;
+    }
+
+    .reply-preview-text {
+        max-width: 100%;
+        font-size: 10px;
+    }
+
+    .reply-preview-close {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        font-size: 21px;
+    }
+
+
+    /* ------------------------------------------------------------
+       COMPOSER
+       ------------------------------------------------------------ */
+
+    .composer {
+        position: relative;
+        width: 100%;
+        flex-shrink: 0;
+        gap: 7px;
+        padding: 8px 9px max(9px, calc(9px + env(safe-area-inset-bottom))) 9px;
+        border-top-color: rgba(255,255,255,.065);
+    }
+
+        .composer textarea {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            max-height: 105px;
+            padding: 12px 13px;
+            border-radius: 13px;
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-appearance: none;
+        }
+
+    .send {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+        border-radius: 13px;
+        font-size: 17px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+
+    /* ------------------------------------------------------------
+       TOAST
+       ------------------------------------------------------------ */
+
+    .toast {
+        left: 50%;
+        right: auto;
+        bottom: calc(72px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 30px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 9px 13px;
+        font-size: 10px;
+    }
+
+
+    /* ------------------------------------------------------------
+       TOUCH TARGETS
+       ------------------------------------------------------------ */
+
+    .share-button,
+    .leave-button,
+    .send,
+    .invite button,
+    .message-tool-button,
+    .reply-message-button,
+    .message-menu-button,
+    .reaction-chip,
+    .reaction-picker-button,
+    .reply-preview-close,
+    .message-action-item {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+
+    /* ------------------------------------------------------------
+       PREVENT ACCIDENTAL TEXT SELECTION ON UI
+       ------------------------------------------------------------ */
+
+    .topbar,
+    .conversation-header,
+    .message-hover-actions,
+    .reaction-picker,
+    .message-reactions,
+    .reply-preview,
+    .composer {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+        .composer textarea,
+        .message-text {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+}
+
+
+/* ================================================================
+   EXTRA SMALL PHONES
+   ================================================================ */
+
+@media (max-width: 420px) {
+
+    .topbar {
+        padding-left: 9px;
+        padding-right: 9px;
+    }
+
+    .logo {
+        font-size: 17px;
+    }
+
+    .share-button {
+        min-width: 36px;
+        width: 36px;
+        padding: 0;
+        font-size: 0;
+    }
+
+        .share-button .share-icon {
+            font-size: 15px;
+        }
+
+    .leave-button {
+        min-width: 36px;
+        width: 36px;
+        padding: 0;
+        font-size: 0;
+    }
+
+    .conversation-header {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .room-status {
+        max-width: 95px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .messages {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .message-row .bubble {
+        max-width: 92%;
+    }
+
+    .message-text {
+        font-size: 12.5px;
+    }
+
+    .composer {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+        .composer textarea {
+            min-height: 44px;
+            padding: 11px 12px;
+            font-size: 12.5px;
+        }
+
+    .send {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+    }
+}
+
+
+/* ================================================================
+   VERY SMALL PHONES
+   ================================================================ */
+
+@media (max-width: 360px) {
+
+    .conversation-header {
+        height: 56px;
+        min-height: 56px;
+    }
+
+        .conversation-header h3 {
+            font-size: 12px;
+        }
+
+    .room-code-label {
+        max-width: 145px;
+        font-size: 7px;
+    }
+
+    .room-private-pill {
+        display: none;
+    }
+
+    .messages {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .message-row .bubble {
+        max-width: 94%;
+    }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+        .message-row .message-tool-label,
+        .message-row .reply-message-button span:not(.reply-message-icon) {
+            display: none;
+        }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button {
+        width: 32px;
+        min-width: 32px;
+        padding: 0;
+    }
+
+    .message-row .message-menu-button {
+        width: 32px;
+        min-width: 32px;
+    }
+}
+
+
+/* ================================================================
+   MOBILE LANDSCAPE
+   ================================================================ */
+
+@media (max-width: 700px) and (orientation: landscape) {
+
+    .topbar {
+        height: 50px;
+        min-height: 50px;
+    }
+
+    .chat-layout {
+        height: calc(100dvh - 50px);
+    }
+
+    .conversation-header {
+        height: 48px;
+        min-height: 48px;
+    }
+
+    .messages {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .composer {
+        padding-top: 5px;
+    }
+
+        .composer textarea {
+            min-height: 40px;
+            max-height: 75px;
+        }
+
+    .send {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+}

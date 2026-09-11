@@ -1,6 +1,7 @@
 using ChatApp.Web.Data;
 using ChatApp.Web.Hubs;
 using ChatApp.Web.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
 var builder =
@@ -30,8 +31,39 @@ builder.Services.AddDbContextFactory<ChatDbContext>(
 builder.Services.AddScoped<ChatService>();
 
 
+// ================================================================
+// FORWARDED HEADERS
+// IMPORTANT FOR NGROK / REVERSE PROXY
+// ================================================================
+
+builder.Services.Configure<ForwardedHeadersOptions>(
+    options =>
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor |
+            ForwardedHeaders.XForwardedProto |
+            ForwardedHeaders.XForwardedHost;
+
+        // Local development / ngrok
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+
+
+// ================================================================
+// BUILD APP
+// ================================================================
+
 var app =
     builder.Build();
+
+
+// ================================================================
+// FORWARDED HEADERS
+// MUST RUN EARLY IN THE PIPELINE
+// ================================================================
+
+app.UseForwardedHeaders();
 
 
 // ================================================================
@@ -161,5 +193,9 @@ await using (
     }
 }
 
+
+// ================================================================
+// RUN
+// ================================================================
 
 app.Run();

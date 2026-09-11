@@ -177,11 +177,9 @@ else
 
                     <i class="@(connected ? "online" : "offline")"></i>
 
-                    @(connected
-                                    ? "Connected"
-                                    : "Connecting…")
+                    @(connected ? "Connected" : "Connecting…")
 
-            </span>
+                </span>
 
                 <button class="share-button"
                         @onclick="CopyInvite">
@@ -277,7 +275,7 @@ else
 
                     <div class="presence-member-list">
 
-                    @foreach (var participant in ParticipantNames)
+                        @foreach (var participant in ParticipantNames)
                         {
                             var participantOnline =
                             IsUserOnline(participant);
@@ -285,10 +283,8 @@ else
                             <div class="presence-member">
 
                                 <div class="presence-member-avatar">
-                                    @(participant.Trim()[0]
-                                                                .ToString()
-                                                                .ToUpperInvariant())
-                        </div>
+                                    @(participant.Trim()[0].ToString().ToUpperInvariant())
+                                </div>
 
                                 <div class="presence-member-info">
 
@@ -296,24 +292,24 @@ else
 
                                         @participant
 
-                                @if (participant.Equals(
-                                                                name,
-                                                                StringComparison.OrdinalIgnoreCase))
+                                        @if (participant.Equals(
+                                                                        name,
+                                                                        StringComparison.OrdinalIgnoreCase))
                                         {
                                             <small>
                                                 You
                                             </small>
                                         }
 
-                            </span>
+                                </span>
 
-                            <span class="presence-member-status @(participantOnline ? "online" : "offline")">
+                                <span class="presence-member-status @(participantOnline ? "online" : "offline")">
 
-                                <i></i>
+                                    <i></i>
 
-                                @(participantOnline
-                                                                ? "Online"
-                                                                : "Offline")
+                                    @(participantOnline
+                                                                    ? "Online"
+                                                                    : "Offline")
 
                             </span>
 
@@ -428,17 +424,14 @@ else
                     {
                         @foreach (var message in messages)
                         {
-                            var mine =
-                            IsMine(message);
+                            var mine = IsMine(message);
 
                             <div class="message-row @(mine ? "mine" : "theirs")"
                                  data-message-id="@message.Id"
                                  data-is-read="@message.IsRead.ToString().ToLowerInvariant()"
                                  @onclick:stopPropagation="true">
 
-                                <!-- =================================================
-                                     REACTION PICKER
-                                     ================================================= -->
+                                <!-- REACTION PICKER -->
                                 @if (reactionPickerMessageId == message.Id &&
                                                     !message.IsDeleted)
                                 {
@@ -461,9 +454,7 @@ else
                                 }
 
 
-                                <!-- =================================================
-                                     MESSAGE BUBBLE
-                                     ================================================= -->
+                                <!-- MESSAGE BUBBLE -->
 
                                 <div class="bubble">
 
@@ -518,9 +509,7 @@ else
                                     }
 
 
-                                    <!-- =================================================
-                                         REACTIONS
-                                         ================================================= -->
+                                    <!-- REACTIONS -->
                                     @if (!message.IsDeleted &&
                                                             message.ReactionItems.Count > 0)
                                     {
@@ -548,9 +537,7 @@ else
                                     }
 
 
-                                <!-- =================================================
-                                     FOOTER
-                                     ================================================= -->
+                                <!-- FOOTER -->
 
                                 <div class="message-footer">
 
@@ -559,7 +546,6 @@ else
                                                                         .ToLocalTime()
                                                                         .ToString("HH:mm"))
                             </time>
-
 
                             @if (mine)
                                         {
@@ -573,27 +559,21 @@ else
                                             {
                                                 <span class="message-read seen"
                                                       title="@GetSeenTitle(message)">
-
                                                     ✓✓ Seen
-
                                                 </span>
                                             }
                                             else if (message.IsDelivered)
                                             {
                                                 <span class="message-read seen"
                                                       title="Delivered to recipient">
-
                                                     ✓✓ Delivered
-
                                                 </span>
                                             }
                                             else
                                             {
                                                 <span class="message-read sent"
                                                       title="Message sent">
-
                                                     ✓ Sent
-
                                                 </span>
                                             }
                                         }
@@ -603,9 +583,7 @@ else
                                 </div>
 
 
-                                <!-- =================================================
-                                     MESSAGE ACTIONS
-                                     ================================================= -->
+                                <!-- MESSAGE ACTIONS -->
                                 @if (!message.IsDeleted)
                                 {
                                     <div class="message-hover-actions"
@@ -705,9 +683,7 @@ else
                 </div>
 
 
-                <!-- ============================================================
-                     TYPING
-                     ============================================================ -->
+                <!-- TYPING -->
                 @if (!string.IsNullOrWhiteSpace(typingUser))
                 {
                     <div class="typing">
@@ -726,9 +702,7 @@ else
                 }
 
 
-                <!-- ============================================================
-                     REPLY PREVIEW
-                     ============================================================ -->
+                <!-- REPLY PREVIEW -->
                 @if (replyingTo is not null)
                 {
                     <div class="reply-preview">
@@ -764,9 +738,7 @@ else
                 }
 
 
-                <!-- ============================================================
-                     COMPOSER
-                     ============================================================ -->
+                <!-- COMPOSER -->
 
                 <footer class="composer">
 
@@ -980,16 +952,14 @@ else
     // ============================================================
 
     [Parameter]
-    public string RoomCode { get; set; } =
-        string.Empty;
+    public string RoomCode { get; set; } = string.Empty;
 
 
     // ============================================================
     // QUERY STRING
     // ============================================================
 
-    private string QueryName { get; set; } =
-        string.Empty;
+    private string QueryName { get; set; } = string.Empty;
 
 
     // ============================================================
@@ -1022,12 +992,9 @@ else
     // MESSAGE DATA
     // ============================================================
 
-    private readonly List<MessageVm> messages =
-        new();
+    private readonly List<MessageVm> messages = new();
 
-    private readonly Dictionary<long, DateTime>
-        seenTimes =
-            new();
+    private readonly Dictionary<long, DateTime> seenTimes = new();
 
 
     // ============================================================
@@ -1037,9 +1004,8 @@ else
     private readonly HashSet<string> onlineUsers =
         new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly HashSet<string>
-        knownParticipants =
-            new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> knownParticipants =
+        new(StringComparer.OrdinalIgnoreCase);
 
 
     // ============================================================
@@ -1063,24 +1029,22 @@ else
 
     private bool isDeleting;
 
-    private DeleteMode deleteMode =
-        DeleteMode.DeleteForMe;
+    private DeleteMode deleteMode = DeleteMode.DeleteForMe;
 
 
     // ============================================================
     // REACTION OPTIONS
     // ============================================================
 
-    private static readonly string[]
-        ReactionOptions =
-        {
-            "👍",
-            "❤️",
-            "😂",
-            "😮",
-            "😢",
-            "👎"
-        };
+    private static readonly string[] ReactionOptions =
+    {
+        "👍",
+        "❤️",
+        "😂",
+        "😮",
+        "😢",
+        "👎"
+    };
 
 
     // ============================================================
@@ -1098,14 +1062,11 @@ else
     // STATE
     // ============================================================
 
-    private string name =
-        string.Empty;
+    private string name = string.Empty;
 
-    private string joinName =
-        string.Empty;
+    private string joinName = string.Empty;
 
-    private string draft =
-        string.Empty;
+    private string draft = string.Empty;
 
     private string? joinError;
 
@@ -1119,8 +1080,7 @@ else
 
     private bool showToast;
 
-    private string toastMessage =
-        string.Empty;
+    private string toastMessage = string.Empty;
 
     private bool showLeaveModal;
 
@@ -1128,11 +1088,33 @@ else
 
 
     // ============================================================
+    // PUBLIC ORIGIN
+    // ============================================================
+
+    private string publicOrigin = string.Empty;
+
+
+    // ============================================================
     // INVITE URL
     // ============================================================
 
-    private string InviteUrl =>
-        $"{Navigation.BaseUri.TrimEnd('/')}/chat/{RoomCode}";
+    private string InviteUrl
+    {
+        get
+        {
+            var origin = publicOrigin;
+
+            if (string.IsNullOrWhiteSpace(origin))
+            {
+                origin =
+                    Navigation.ToAbsoluteUri("/")
+                        .GetLeftPart(UriPartial.Authority);
+            }
+
+            return
+                $"{origin.TrimEnd('/')}/chat/{RoomCode}";
+        }
+    }
 
 
     // ============================================================
@@ -1151,12 +1133,9 @@ else
     // PARTICIPANTS
     // ============================================================
 
-    private IEnumerable<string>
-        ParticipantNames =>
+    private IEnumerable<string> ParticipantNames =>
         knownParticipants
-            .Where(
-                x =>
-                    !string.IsNullOrWhiteSpace(x))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
             .OrderBy(
                 x =>
                     string.Equals(
@@ -1166,16 +1145,13 @@ else
                         ? 0
                         : 1)
             .ThenBy(
-                x =>
-                    x,
+                x => x,
                 StringComparer.OrdinalIgnoreCase);
 
 
-    private bool IsUserOnline(
-        string userName)
+    private bool IsUserOnline(string userName)
     {
-        return onlineUsers.Contains(
-            userName);
+        return onlineUsers.Contains(userName);
     }
 
 
@@ -1192,17 +1168,14 @@ else
                     .Trim()
                     .ToLowerInvariant();
 
-
             var uri =
                 Navigation.ToAbsoluteUri(
                     Navigation.Uri);
-
 
             var query =
                 Microsoft.AspNetCore.WebUtilities
                     .QueryHelpers
                     .ParseQuery(uri.Query);
-
 
             if (query.TryGetValue(
                     "name",
@@ -1212,11 +1185,14 @@ else
                     queryName.ToString();
             }
 
+            // Fallback origin from the current browser/navigation URL.
+            publicOrigin =
+                uri.GetLeftPart(
+                    UriPartial.Authority);
 
             var exists =
                 await ChatService.RoomExistsAsync(
                     RoomCode);
-
 
             if (!exists)
             {
@@ -1225,19 +1201,16 @@ else
                 return;
             }
 
-
             if (!string.IsNullOrWhiteSpace(QueryName))
             {
                 var existingName =
                     QueryName.Trim();
-
 
                 if (existingName.Length > 40)
                 {
                     existingName =
                         existingName[..40];
                 }
-
 
                 if (!string.IsNullOrWhiteSpace(existingName))
                 {
@@ -1274,10 +1247,8 @@ else
         joinError = null;
         error = null;
 
-
         var enteredName =
             joinName.Trim();
-
 
         if (string.IsNullOrWhiteSpace(enteredName))
         {
@@ -1287,7 +1258,6 @@ else
             return;
         }
 
-
         if (enteredName.Length < 2)
         {
             joinError =
@@ -1295,7 +1265,6 @@ else
 
             return;
         }
-
 
         if (enteredName.Length > 40)
         {
@@ -1305,21 +1274,16 @@ else
             return;
         }
 
-
-        isJoining =
-            true;
-
+        isJoining = true;
 
         try
         {
             name =
                 enteredName;
 
-
             var exists =
                 await ChatService.RoomExistsAsync(
                     RoomCode);
-
 
             if (!exists)
             {
@@ -1329,29 +1293,23 @@ else
                 return;
             }
 
-
-            hasJoined =
-                true;
-
+            hasJoined = true;
 
             await InvokeAsync(
                 StateHasChanged);
-
 
             await InitializeChatAsync();
         }
         catch (Exception ex)
         {
-            hasJoined =
-                false;
+            hasJoined = false;
 
             joinError =
                 $"Unable to join chat: {ex.Message}";
         }
         finally
         {
-            isJoining =
-                false;
+            isJoining = false;
         }
     }
 
@@ -1381,19 +1339,12 @@ else
             return;
         }
 
-
-        // --------------------------------------------------------
-        // HISTORY
-        // --------------------------------------------------------
-
         var history =
             await ChatService.GetMessagesAsync(
                 RoomCode,
                 name);
 
-
         messages.Clear();
-
 
         foreach (var item in history)
         {
@@ -1413,32 +1364,27 @@ else
 
 
         // --------------------------------------------------------
-        // PARTICIPANTS FROM HISTORY
+        // PARTICIPANTS
         // --------------------------------------------------------
 
-        knownParticipants.Add(
-            name);
-
+        knownParticipants.Add(name);
 
         foreach (var message in messages)
         {
-            if (!string.IsNullOrWhiteSpace(
-                    message.Sender))
+            if (!string.IsNullOrWhiteSpace(message.Sender))
             {
-                knownParticipants.Add(
-                    message.Sender);
+                knownParticipants.Add(message.Sender);
             }
         }
 
 
         // --------------------------------------------------------
-        // REACTIONS FROM DATABASE
+        // REACTIONS
         // --------------------------------------------------------
 
         var reactionMap =
             await ChatService.GetReactionsAsync(
                 messages.Select(x => x.Id));
-
 
         for (var i = 0;
              i < messages.Count;
@@ -1446,7 +1392,6 @@ else
         {
             var message =
                 messages[i];
-
 
             if (reactionMap.TryGetValue(
                     message.Id,
@@ -1469,7 +1414,7 @@ else
 
 
         // --------------------------------------------------------
-        // CREATE HUB
+        // SIGNALR HUB
         // --------------------------------------------------------
 
         hub =
@@ -1492,8 +1437,7 @@ else
                 await InvokeAsync(() =>
                 {
                     if (messages.All(
-                            x =>
-                                x.Id != message.Id))
+                            x => x.Id != message.Id))
                     {
                         messages.Add(
                             message with
@@ -1504,7 +1448,6 @@ else
                             });
                     }
 
-
                     if (!string.IsNullOrWhiteSpace(
                             message.Sender))
                     {
@@ -1512,18 +1455,11 @@ else
                             message.Sender);
                     }
 
-
                     StateHasChanged();
                 });
 
 
-                // ------------------------------------------------
-                // DELIVERY ACK
-                //
-                // The receiver tells the server that the message
-                // reached this client.
-                // ------------------------------------------------
-
+                // Receiver confirms delivery.
                 if (!string.Equals(
                         message.Sender,
                         name,
@@ -1544,13 +1480,12 @@ else
                     }
                 }
 
-
                 await ScrollToBottomAsync();
             });
 
 
         // --------------------------------------------------------
-        // MESSAGE DELIVERED
+        // DELIVERED
         // --------------------------------------------------------
 
         hub.On<long>(
@@ -1561,18 +1496,13 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x =>
-                                x.Id == messageId);
-
+                            x => x.Id == messageId);
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
 
-
-                        // Only messages sent by the current user
-                        // should visually change here.
                         if (message.Sender.Equals(
                                 name,
                                 StringComparison.OrdinalIgnoreCase))
@@ -1580,12 +1510,10 @@ else
                             messages[index] =
                                 message with
                                 {
-                                    IsDelivered =
-                                        true
+                                    IsDelivered = true
                                 };
                         }
                     }
-
 
                     StateHasChanged();
                 });
@@ -1604,23 +1532,16 @@ else
                 {
                     onlineUsers.Clear();
 
-
                     foreach (var user in users)
                     {
-                        if (string.IsNullOrWhiteSpace(
-                                user))
+                        if (string.IsNullOrWhiteSpace(user))
                         {
                             continue;
                         }
 
-
-                        onlineUsers.Add(
-                            user);
-
-                        knownParticipants.Add(
-                            user);
+                        onlineUsers.Add(user);
+                        knownParticipants.Add(user);
                     }
-
 
                     StateHasChanged();
                 });
@@ -1628,7 +1549,7 @@ else
 
 
         // --------------------------------------------------------
-        // PRESENCE CHANGED
+        // PRESENCE CHANGE
         // --------------------------------------------------------
 
         hub.On<string, bool>(
@@ -1637,25 +1558,19 @@ else
             {
                 await InvokeAsync(() =>
                 {
-                    if (!string.IsNullOrWhiteSpace(
-                            userName))
+                    if (!string.IsNullOrWhiteSpace(userName))
                     {
-                        knownParticipants.Add(
-                            userName);
-
+                        knownParticipants.Add(userName);
 
                         if (isOnline)
                         {
-                            onlineUsers.Add(
-                                userName);
+                            onlineUsers.Add(userName);
                         }
                         else
                         {
-                            onlineUsers.Remove(
-                                userName);
+                            onlineUsers.Remove(userName);
                         }
                     }
-
 
                     StateHasChanged();
                 });
@@ -1663,7 +1578,7 @@ else
 
 
         // --------------------------------------------------------
-        // REACTION CHANGED
+        // REACTION CHANGE
         // --------------------------------------------------------
 
         hub.On<long, List<ReactionVm>>(
@@ -1674,15 +1589,12 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x =>
-                                x.Id == messageId);
-
+                            x => x.Id == messageId);
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
-
 
                         messages[index] =
                             message with
@@ -1693,10 +1605,7 @@ else
                             };
                     }
 
-
-                    reactionPickerMessageId =
-                        null;
-
+                    reactionPickerMessageId = null;
 
                     StateHasChanged();
                 });
@@ -1704,7 +1613,7 @@ else
 
 
         // --------------------------------------------------------
-        // MESSAGE READ
+        // READ
         // --------------------------------------------------------
 
         hub.On<long>(
@@ -1715,15 +1624,12 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x =>
-                                x.Id == messageId);
-
+                            x => x.Id == messageId);
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
-
 
                         messages[index] =
                             message with
@@ -1732,14 +1638,11 @@ else
                                 IsDelivered = true
                             };
 
-
                         seenTimes[messageId] =
                             DateTime.UtcNow;
                     }
 
-
                     StartSeenTimer();
-
 
                     StateHasChanged();
                 });
@@ -1764,12 +1667,10 @@ else
                         return;
                     }
 
-
                     typingUser =
                         isTyping
                             ? sender
                             : null;
-
 
                     StateHasChanged();
                 });
@@ -1788,23 +1689,15 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x =>
-                                x.Id == messageId);
-
+                            x => x.Id == messageId);
 
                     if (index >= 0)
                     {
-                        messages.RemoveAt(
-                            index);
+                        messages.RemoveAt(index);
                     }
 
-
-                    openMenuMessageId =
-                        null;
-
-                    reactionPickerMessageId =
-                        null;
-
+                    openMenuMessageId = null;
+                    reactionPickerMessageId = null;
 
                     StateHasChanged();
                 });
@@ -1823,15 +1716,12 @@ else
                 {
                     var index =
                         messages.FindIndex(
-                            x =>
-                                x.Id == messageId);
-
+                            x => x.Id == messageId);
 
                     if (index >= 0)
                     {
                         var message =
                             messages[index];
-
 
                         messages[index] =
                             message with
@@ -1839,30 +1729,18 @@ else
                                 Text =
                                     "[This message was deleted]",
 
-                                ReplyToMessageId =
-                                    null,
-
-                                ReplyToSender =
-                                    null,
-
-                                ReplyToText =
-                                    null,
-
-                                IsDeleted =
-                                    true,
+                                ReplyToMessageId = null,
+                                ReplyToSender = null,
+                                ReplyToText = null,
+                                IsDeleted = true,
 
                                 Reactions =
                                     new List<ReactionVm>()
                             };
                     }
 
-
-                    openMenuMessageId =
-                        null;
-
-                    reactionPickerMessageId =
-                        null;
-
+                    openMenuMessageId = null;
+                    reactionPickerMessageId = null;
 
                     StateHasChanged();
                 });
@@ -1875,9 +1753,7 @@ else
 
         hub.Reconnecting += _ =>
         {
-            connected =
-                false;
-
+            connected = false;
 
             return InvokeAsync(
                 StateHasChanged);
@@ -1895,7 +1771,6 @@ else
                 return;
             }
 
-
             try
             {
                 await hub.InvokeAsync(
@@ -1903,16 +1778,12 @@ else
                     RoomCode,
                     name);
 
-
-                connected =
-                    true;
+                connected = true;
             }
             catch
             {
-                connected =
-                    false;
+                connected = false;
             }
-
 
             await InvokeAsync(
                 StateHasChanged);
@@ -1925,13 +1796,9 @@ else
 
         hub.Closed += _ =>
         {
-            connected =
-                false;
+            connected = false;
 
-
-            onlineUsers.Remove(
-                name);
-
+            onlineUsers.Remove(name);
 
             return InvokeAsync(
                 StateHasChanged);
@@ -1944,23 +1811,17 @@ else
 
         await hub.StartAsync();
 
-
         await hub.InvokeAsync(
             "JoinRoom",
             RoomCode,
             name);
 
-
-        connected =
-            true;
-
+        connected = true;
 
         StartSeenTimer();
 
-
         await InvokeAsync(
             StateHasChanged);
-
 
         await ScrollToBottomAsync();
     }
@@ -1971,8 +1832,7 @@ else
     // ============================================================
 
     [JSInvokable]
-    public async Task MarkVisibleMessage(
-        long messageId)
+    public async Task MarkVisibleMessage(long messageId)
     {
         if (hub is null ||
             !connected ||
@@ -1980,7 +1840,6 @@ else
         {
             return;
         }
-
 
         try
         {
@@ -2008,21 +1867,12 @@ else
             return;
         }
 
+        replyingTo = message;
 
-        replyingTo =
-            message;
+        openMenuMessageId = null;
+        reactionPickerMessageId = null;
 
-
-        openMenuMessageId =
-            null;
-
-        reactionPickerMessageId =
-            null;
-
-
-        await InvokeAsync(
-            StateHasChanged);
-
+        await InvokeAsync(StateHasChanged);
 
         try
         {
@@ -2037,8 +1887,7 @@ else
 
     private void CancelReply()
     {
-        replyingTo =
-            null;
+        replyingTo = null;
     }
 
 
@@ -2050,19 +1899,16 @@ else
             return string.Empty;
         }
 
-
         var cleanText =
             text
                 .Replace("\r", " ")
                 .Replace("\n", " ")
                 .Trim();
 
-
         if (cleanText.Length <= 90)
         {
             return cleanText;
         }
-
 
         return cleanText[..90] + "…";
     }
@@ -2075,21 +1921,12 @@ else
     private void ToggleMessageMenu(
         long messageId)
     {
-        reactionPickerMessageId =
-            null;
+        reactionPickerMessageId = null;
 
-
-        if (openMenuMessageId ==
-            messageId)
-        {
-            openMenuMessageId =
-                null;
-        }
-        else
-        {
-            openMenuMessageId =
-                messageId;
-        }
+        openMenuMessageId =
+            openMenuMessageId == messageId
+                ? null
+                : messageId;
     }
 
 
@@ -2100,21 +1937,12 @@ else
     private void ToggleReactionPicker(
         long messageId)
     {
-        openMenuMessageId =
-            null;
+        openMenuMessageId = null;
 
-
-        if (reactionPickerMessageId ==
-            messageId)
-        {
-            reactionPickerMessageId =
-                null;
-        }
-        else
-        {
-            reactionPickerMessageId =
-                messageId;
-        }
+        reactionPickerMessageId =
+            reactionPickerMessageId == messageId
+                ? null
+                : messageId;
     }
 
 
@@ -2129,7 +1957,6 @@ else
             return;
         }
 
-
         try
         {
             await hub.InvokeAsync(
@@ -2139,16 +1966,13 @@ else
                 name,
                 reaction);
 
-
-            reactionPickerMessageId =
-                null;
+            reactionPickerMessageId = null;
         }
         catch (Exception ex)
         {
             error =
                 $"Unable to react: {ex.Message}";
         }
-
 
         await InvokeAsync(
             StateHasChanged);
@@ -2165,8 +1989,7 @@ else
                     x.UserName.Equals(
                         name,
                         StringComparison.OrdinalIgnoreCase) &&
-                    x.Reaction ==
-                        reaction);
+                    x.Reaction == reaction);
     }
 
 
@@ -2174,22 +1997,17 @@ else
         GetReactionGroups(
             MessageVm message)
     {
-        return message.ReactionItems
-            .GroupBy(
-                x =>
-                    x.Reaction)
-            .Select(
-                group =>
+        return
+            message.ReactionItems
+                .GroupBy(x => x.Reaction)
+                .Select(group =>
                 {
                     var users =
                         group
-                            .Select(
-                                x =>
-                                    x.UserName)
+                            .Select(x => x.UserName)
                             .Distinct(
                                 StringComparer.OrdinalIgnoreCase)
                             .ToList();
-
 
                     var isMine =
                         users.Any(
@@ -2198,7 +2016,6 @@ else
                                     name,
                                     StringComparison.OrdinalIgnoreCase));
 
-
                     var usersText =
                         users.Count switch
                         {
@@ -2206,14 +2023,11 @@ else
                                 string.Empty,
 
                             <= 3 =>
-                                string.Join(
-                                    ", ",
-                                    users),
+                                string.Join(", ", users),
 
                             _ =>
                                 $"{users.Count} people reacted"
                         };
-
 
                     return new ReactionGroupVm(
                         group.Key,
@@ -2230,11 +2044,8 @@ else
 
     private void CloseFloatingActions()
     {
-        openMenuMessageId =
-            null;
-
-        reactionPickerMessageId =
-            null;
+        openMenuMessageId = null;
+        reactionPickerMessageId = null;
     }
 
 
@@ -2245,24 +2056,14 @@ else
     private void AskDeleteForMe(
         MessageVm message)
     {
-        selectedMessage =
-            message;
+        selectedMessage = message;
 
+        deleteMode = DeleteMode.DeleteForMe;
 
-        deleteMode =
-            DeleteMode.DeleteForMe;
+        showDeleteModal = true;
 
-
-        showDeleteModal =
-            true;
-
-
-        openMenuMessageId =
-            null;
-
-
-        reactionPickerMessageId =
-            null;
+        openMenuMessageId = null;
+        reactionPickerMessageId = null;
     }
 
 
@@ -2275,25 +2076,14 @@ else
             return;
         }
 
+        selectedMessage = message;
 
-        selectedMessage =
-            message;
+        deleteMode = DeleteMode.Unsend;
 
+        showDeleteModal = true;
 
-        deleteMode =
-            DeleteMode.Unsend;
-
-
-        showDeleteModal =
-            true;
-
-
-        openMenuMessageId =
-            null;
-
-
-        reactionPickerMessageId =
-            null;
+        openMenuMessageId = null;
+        reactionPickerMessageId = null;
     }
 
 
@@ -2304,17 +2094,9 @@ else
             return;
         }
 
-
-        showDeleteModal =
-            false;
-
-
-        selectedMessage =
-            null;
-
-
-        deleteMode =
-            DeleteMode.DeleteForMe;
+        showDeleteModal = false;
+        selectedMessage = null;
+        deleteMode = DeleteMode.DeleteForMe;
     }
 
 
@@ -2327,19 +2109,14 @@ else
             return;
         }
 
-
-        isDeleting =
-            true;
-
+        isDeleting = true;
 
         var messageId =
             selectedMessage.Id;
 
-
         try
         {
-            if (deleteMode ==
-                DeleteMode.DeleteForMe)
+            if (deleteMode == DeleteMode.DeleteForMe)
             {
                 await hub.InvokeAsync(
                     "DeleteMessageForMe",
@@ -2347,13 +2124,8 @@ else
                     messageId,
                     name);
 
-
-                showDeleteModal =
-                    false;
-
-
-                selectedMessage =
-                    null;
+                showDeleteModal = false;
+                selectedMessage = null;
             }
             else
             {
@@ -2363,15 +2135,9 @@ else
                     messageId,
                     name);
 
-
-                showDeleteModal =
-                    false;
-
-
-                selectedMessage =
-                    null;
+                showDeleteModal = false;
+                selectedMessage = null;
             }
-
 
             await InvokeAsync(
                 StateHasChanged);
@@ -2381,22 +2147,15 @@ else
             error =
                 $"Unable to delete message: {ex.Message}";
 
-
-            showDeleteModal =
-                false;
-
-
-            selectedMessage =
-                null;
-
+            showDeleteModal = false;
+            selectedMessage = null;
 
             await InvokeAsync(
                 StateHasChanged);
         }
         finally
         {
-            isDeleting =
-                false;
+            isDeleting = false;
         }
     }
 
@@ -2409,19 +2168,16 @@ else
             return string.Empty;
         }
 
-
         var cleanText =
             text
                 .Replace("\r", " ")
                 .Replace("\n", " ")
                 .Trim();
 
-
         if (cleanText.Length <= 100)
         {
             return cleanText;
         }
-
 
         return cleanText[..100] + "…";
     }
@@ -2434,8 +2190,7 @@ else
     private async Task HandleKeyDown(
         KeyboardEventArgs e)
     {
-        if (e.Key ==
-                "Enter" &&
+        if (e.Key == "Enter" &&
             !e.ShiftKey)
         {
             await Send();
@@ -2443,13 +2198,11 @@ else
             return;
         }
 
-
         if (hub is null ||
             !connected)
         {
             return;
         }
-
 
         try
         {
@@ -2463,14 +2216,11 @@ else
         {
         }
 
-
         typingCts?.Cancel();
         typingCts?.Dispose();
 
-
         typingCts =
             new CancellationTokenSource();
-
 
         _ =
             StopTypingLaterAsync(
@@ -2487,14 +2237,12 @@ else
                 900,
                 token);
 
-
             if (token.IsCancellationRequested ||
                 hub is null ||
                 !connected)
             {
                 return;
             }
-
 
             try
             {
@@ -2529,38 +2277,28 @@ else
             return;
         }
 
-
-        if (string.IsNullOrWhiteSpace(
-                draft))
+        if (string.IsNullOrWhiteSpace(draft))
         {
             return;
         }
 
-
         var text =
             draft.Trim();
-
 
         if (string.IsNullOrWhiteSpace(text))
         {
             return;
         }
 
-
         if (text.Length > 2000)
         {
-            text =
-                text[..2000];
+            text = text[..2000];
         }
-
 
         var replyId =
             replyingTo?.Id;
 
-
-        draft =
-            string.Empty;
-
+        draft = string.Empty;
 
         try
         {
@@ -2571,33 +2309,23 @@ else
                 text,
                 replyId);
 
-
-            typingUser =
-                null;
-
+            typingUser = null;
 
             typingCts?.Cancel();
 
-
-            replyingTo =
-                null;
-
+            replyingTo = null;
 
             await InvokeAsync(
                 StateHasChanged);
-
 
             await ScrollToBottomAsync();
         }
         catch (Exception ex)
         {
-            draft =
-                text;
-
+            draft = text;
 
             error =
                 $"Unable to send message: {ex.Message}";
-
 
             await InvokeAsync(
                 StateHasChanged);
@@ -2613,30 +2341,44 @@ else
     {
         try
         {
+            // Always get the actual browser origin.
+            // This is important when running behind ngrok.
+            try
+            {
+                var browserOrigin =
+                    await JS.InvokeAsync<string>(
+                        "eval",
+                        "window.location.origin");
+
+                if (!string.IsNullOrWhiteSpace(browserOrigin))
+                {
+                    publicOrigin =
+                        browserOrigin.TrimEnd('/');
+                }
+            }
+            catch
+            {
+                // Keep the server/navigation fallback.
+            }
+
+            var inviteUrl =
+                InviteUrl;
+
             await JS.InvokeVoidAsync(
                 "navigator.clipboard.writeText",
-                InviteUrl);
-
+                inviteUrl);
 
             toastMessage =
-                "Invite link copied";
+                $"Invite link copied";
 
-
-            showToast =
-                true;
-
+            showToast = true;
 
             await InvokeAsync(
                 StateHasChanged);
 
+            await Task.Delay(1500);
 
-            await Task.Delay(
-                1500);
-
-
-            showToast =
-                false;
-
+            showToast = false;
 
             await InvokeAsync(
                 StateHasChanged);
@@ -2655,8 +2397,7 @@ else
     {
         if (!isLeaving)
         {
-            showLeaveModal =
-                true;
+            showLeaveModal = true;
         }
     }
 
@@ -2665,8 +2406,7 @@ else
     {
         if (!isLeaving)
         {
-            showLeaveModal =
-                false;
+            showLeaveModal = false;
         }
     }
 
@@ -2678,16 +2418,12 @@ else
             return;
         }
 
-
-        isLeaving =
-            true;
-
+        isLeaving = true;
 
         try
         {
             typingCts?.Cancel();
             seenTimerCts?.Cancel();
-
 
             if (hub is not null)
             {
@@ -2699,15 +2435,10 @@ else
                 {
                 }
 
-
-                hub =
-                    null;
+                hub = null;
             }
 
-
-            connected =
-                false;
-
+            connected = false;
 
             Navigation.NavigateTo(
                 "/",
@@ -2715,12 +2446,8 @@ else
         }
         catch
         {
-            isLeaving =
-                false;
-
-            showLeaveModal =
-                false;
-
+            isLeaving = false;
+            showLeaveModal = false;
 
             await InvokeAsync(
                 StateHasChanged);
@@ -2735,9 +2462,10 @@ else
     private bool IsMine(
         MessageVm message)
     {
-        return message.Sender.Equals(
-            name,
-            StringComparison.OrdinalIgnoreCase);
+        return
+            message.Sender.Equals(
+                name,
+                StringComparison.OrdinalIgnoreCase);
     }
 
 
@@ -2752,15 +2480,12 @@ else
             return;
         }
 
-
         seenTimerCts =
             new CancellationTokenSource();
-
 
         seenTimer =
             new PeriodicTimer(
                 TimeSpan.FromSeconds(15));
-
 
         _ =
             RunSeenTimerAsync(
@@ -2808,7 +2533,6 @@ else
                 : "Sent";
         }
 
-
         if (!seenTimes.TryGetValue(
                 message.Id,
                 out var seenAt))
@@ -2816,16 +2540,13 @@ else
             return "Seen";
         }
 
-
         var elapsed =
             DateTime.UtcNow - seenAt;
-
 
         if (elapsed.TotalSeconds < 60)
         {
             return "Seen just now";
         }
-
 
         if (elapsed.TotalMinutes < 60)
         {
@@ -2835,12 +2556,10 @@ else
                     (int)Math.Floor(
                         elapsed.TotalMinutes));
 
-
             return minutes == 1
                 ? "Seen 1 min ago"
                 : $"Seen {minutes} min ago";
         }
-
 
         if (elapsed.TotalHours < 24)
         {
@@ -2850,12 +2569,10 @@ else
                     (int)Math.Floor(
                         elapsed.TotalHours));
 
-
             return hours == 1
                 ? "Seen 1 hr ago"
                 : $"Seen {hours} hrs ago";
         }
-
 
         if (elapsed.TotalDays < 7)
         {
@@ -2865,12 +2582,10 @@ else
                     (int)Math.Floor(
                         elapsed.TotalDays));
 
-
             return days == 1
                 ? "Seen 1 day ago"
                 : $"Seen {days} days ago";
         }
-
 
         return
             $"Seen {seenAt.ToLocalTime():dd MMM}";
@@ -2891,14 +2606,12 @@ else
                 : "Message sent";
         }
 
-
         if (!seenTimes.TryGetValue(
                 message.Id,
                 out var seenAt))
         {
             return "Seen";
         }
-
 
         return
             $"Seen at {seenAt.ToLocalTime():dd MMM yyyy HH:mm}";
@@ -2918,7 +2631,6 @@ else
                 DotNetObjectReference.Create(
                     this);
 
-
             try
             {
                 await JS.InvokeVoidAsync(
@@ -2927,8 +2639,36 @@ else
             catch
             {
             }
-        }
 
+            // Most reliable source for the public URL.
+            try
+            {
+                var browserOrigin =
+                    await JS.InvokeAsync<string>(
+                        "eval",
+                        "window.location.origin");
+
+                if (!string.IsNullOrWhiteSpace(browserOrigin))
+                {
+                    var normalized =
+                        browserOrigin.TrimEnd('/');
+
+                    if (!string.Equals(
+                            publicOrigin,
+                            normalized,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        publicOrigin = normalized;
+
+                        await InvokeAsync(
+                            StateHasChanged);
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
 
         if (hasJoined &&
             connected &&
@@ -2979,7 +2719,6 @@ else
         {
         }
 
-
         try
         {
             seenTimerCts?.Cancel();
@@ -2989,7 +2728,6 @@ else
         {
         }
 
-
         try
         {
             seenTimer?.Dispose();
@@ -2998,7 +2736,6 @@ else
         {
         }
 
-
         try
         {
             dotNetReference?.Dispose();
@@ -3006,7 +2743,6 @@ else
         catch
         {
         }
-
 
         try
         {
