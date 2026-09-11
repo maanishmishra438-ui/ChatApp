@@ -15,10 +15,6 @@
 
 @if (!hasJoined)
 {
-    <!-- ============================================================
-         JOIN SCREEN
-         ============================================================ -->
-
     <div class="join-screen">
 
         <div class="join-card">
@@ -150,13 +146,11 @@
 }
 else
 {
-    <!-- ============================================================
-         CHAT
-         ============================================================ -->
-
     <div class="chat-shell">
 
-        <!-- TOP BAR -->
+        <!-- ============================================================
+             TOP BAR
+             ============================================================ -->
 
         <header class="topbar">
 
@@ -217,11 +211,15 @@ else
         </header>
 
 
-        <!-- MAIN LAYOUT -->
+        <!-- ============================================================
+             MAIN LAYOUT
+             ============================================================ -->
 
         <main class="chat-layout">
 
-            <!-- SIDEBAR -->
+            <!-- ========================================================
+                 SIDEBAR
+                 ======================================================== -->
 
             <aside class="side-panel">
 
@@ -258,6 +256,77 @@ else
                     Anyone with the link can enter this room.
                 </div>
 
+
+                <!-- ====================================================
+                     ROOM MEMBERS
+                     ==================================================== -->
+
+                <div class="presence-card">
+
+                    <div class="presence-card-header">
+
+                        <span class="presence-card-title">
+                            ROOM MEMBERS
+                        </span>
+
+                        <span class="presence-card-count">
+                            @knownParticipants.Count
+                        </span>
+
+                    </div>
+
+                    <div class="presence-member-list">
+
+                    @foreach (var participant in ParticipantNames)
+                        {
+                            var participantOnline =
+                            IsUserOnline(participant);
+
+                            <div class="presence-member">
+
+                                <div class="presence-member-avatar">
+                                    @(participant.Trim()[0]
+                                                                .ToString()
+                                                                .ToUpperInvariant())
+                        </div>
+
+                                <div class="presence-member-info">
+
+                                    <span class="presence-member-name">
+
+                                        @participant
+
+                                @if (participant.Equals(
+                                                                name,
+                                                                StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <small>
+                                                You
+                                            </small>
+                                        }
+
+                            </span>
+
+                            <span class="presence-member-status @(participantOnline ? "online" : "offline")">
+
+                                <i></i>
+
+                                @(participantOnline
+                                                                ? "Online"
+                                                                : "Offline")
+
+                            </span>
+
+                                </div>
+
+                            </div>
+                                        }
+
+                    </div>
+
+                </div>
+
+
                 <button class="side-leave-button"
                         @onclick="OpenLeaveModal"
                         disabled="@isLeaving">
@@ -273,11 +342,11 @@ else
             </aside>
 
 
-            <!-- CONVERSATION -->
+            <!-- ========================================================
+                 CONVERSATION
+                 ======================================================== -->
 
             <section class="conversation">
-
-                <!-- HEADER -->
 
                 <div class="conversation-header">
 
@@ -301,24 +370,43 @@ else
 
                     </div>
 
-                    <div class="room-status">
+                    <div class="room-status presence-summary">
 
                         <span class="status-dot"></span>
 
-                        Active
+                        @if (onlineUsers.Count == 0)
+                        {
+                            <span>
+                                Offline
+                            </span>
+                        }
+                        else if (onlineUsers.Count == 1)
+                        {
+                            <span>
+                                1 person online
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                @onlineUsers.Count people online
+                            </span>
+                        }
 
                     </div>
 
                 </div>
 
 
-                <!-- MESSAGES -->
+                <!-- =====================================================
+                     MESSAGES
+                     ===================================================== -->
 
                 <div class="messages"
                      @ref="messagesContainer"
                      @onclick="CloseFloatingActions">
 
-                @if (messages.Count == 0)
+                    @if (messages.Count == 0)
                     {
                         <div class="empty">
 
@@ -340,7 +428,8 @@ else
                     {
                         @foreach (var message in messages)
                         {
-                            var mine = IsMine(message);
+                            var mine =
+                            IsMine(message);
 
                             <div class="message-row @(mine ? "mine" : "theirs")"
                                  data-message-id="@message.Id"
@@ -394,7 +483,6 @@ else
                                     }
                                     else
                                     {
-                                        <!-- REPLY QUOTE -->
                                         @if (message.ReplyToMessageId.HasValue &&
                                                                 !string.IsNullOrWhiteSpace(message.ReplyToText))
                                         {
@@ -409,7 +497,7 @@ else
                                                     </span>
 
                                                     <span class="quoted-message-text">
-                                                        @GetReplyPreview(message.ReplyToText)
+                                                        @(GetReplyPreview(message.ReplyToText))
                                                     </span>
 
                                                 </div>
@@ -417,17 +505,12 @@ else
                                             </div>
                                         }
 
-
-                                        <!-- SENDER -->
                                         @if (!mine)
                                         {
                                             <strong>
                                                 @message.Sender
                                             </strong>
                                         }
-
-
-                                        <!-- TEXT -->
 
                                         <div class="message-text">
                                             @message.Text
@@ -465,15 +548,20 @@ else
                                     }
 
 
-                                    <!-- FOOTER -->
+                                <!-- =================================================
+                                     FOOTER
+                                     ================================================= -->
 
-                                    <div class="message-footer">
+                                <div class="message-footer">
 
-                                        <time>
-                                            @message.SentAt.ToLocalTime().ToString("HH:mm")
-                                        </time>
+                                    <time>
+                                        @(message.SentAt
+                                                                        .ToLocalTime()
+                                                                        .ToString("HH:mm"))
+                            </time>
 
-                                        @if (mine)
+
+                            @if (mine)
                                         {
                                             @if (message.IsDeleted)
                                             {
@@ -486,16 +574,25 @@ else
                                                 <span class="message-read seen"
                                                       title="@GetSeenTitle(message)">
 
-                                                    @GetSeenText(message)
+                                                    ✓✓ Seen
+
+                                                </span>
+                                            }
+                                            else if (message.IsDelivered)
+                                            {
+                                                <span class="message-read seen"
+                                                      title="Delivered to recipient">
+
+                                                    ✓✓ Delivered
 
                                                 </span>
                                             }
                                             else
                                             {
                                                 <span class="message-read sent"
-                                                      title="Delivered">
+                                                      title="Message sent">
 
-                                                    Sent
+                                                    ✓ Sent
 
                                                 </span>
                                             }
@@ -608,7 +705,9 @@ else
                 </div>
 
 
-                <!-- TYPING -->
+                <!-- ============================================================
+                     TYPING
+                     ============================================================ -->
                 @if (!string.IsNullOrWhiteSpace(typingUser))
                 {
                     <div class="typing">
@@ -627,7 +726,9 @@ else
                 }
 
 
-                <!-- REPLY PREVIEW -->
+                <!-- ============================================================
+                     REPLY PREVIEW
+                     ============================================================ -->
                 @if (replyingTo is not null)
                 {
                     <div class="reply-preview">
@@ -645,7 +746,7 @@ else
                             </span>
 
                             <span class="reply-preview-text">
-                                @GetReplyPreview(replyingTo.Text)
+                                @(GetReplyPreview(replyingTo.Text))
                             </span>
 
                         </div>
@@ -663,7 +764,9 @@ else
                 }
 
 
-                <!-- COMPOSER -->
+                <!-- ============================================================
+                     COMPOSER
+                     ============================================================ -->
 
                 <footer class="composer">
 
@@ -819,7 +922,7 @@ else
                     }
 
                     <div class="delete-modal-preview">
-                        "@GetDeletePreview(selectedMessage.Text)"
+                        "@(GetDeletePreview(selectedMessage.Text))"
                     </div>
 
                 </div>
@@ -877,7 +980,8 @@ else
     // ============================================================
 
     [Parameter]
-    public string RoomCode { get; set; } = string.Empty;
+    public string RoomCode { get; set; } =
+        string.Empty;
 
 
     // ============================================================
@@ -901,7 +1005,8 @@ else
     // JS
     // ============================================================
 
-    private DotNetObjectReference<Chat>? dotNetReference;
+    private DotNetObjectReference<Chat>?
+        dotNetReference;
 
 
     // ============================================================
@@ -920,8 +1025,21 @@ else
     private readonly List<MessageVm> messages =
         new();
 
-    private readonly Dictionary<long, DateTime> seenTimes =
-        new();
+    private readonly Dictionary<long, DateTime>
+        seenTimes =
+            new();
+
+
+    // ============================================================
+    // PRESENCE
+    // ============================================================
+
+    private readonly HashSet<string> onlineUsers =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly HashSet<string>
+        knownParticipants =
+            new(StringComparer.OrdinalIgnoreCase);
 
 
     // ============================================================
@@ -953,15 +1071,16 @@ else
     // REACTION OPTIONS
     // ============================================================
 
-    private static readonly string[] ReactionOptions =
-    {
-        "👍",
-        "❤️",
-        "😂",
-        "😮",
-        "😢",
-        "👎"
-    };
+    private static readonly string[]
+        ReactionOptions =
+        {
+            "👍",
+            "❤️",
+            "😂",
+            "😮",
+            "😢",
+            "👎"
+        };
 
 
     // ============================================================
@@ -1029,6 +1148,38 @@ else
 
 
     // ============================================================
+    // PARTICIPANTS
+    // ============================================================
+
+    private IEnumerable<string>
+        ParticipantNames =>
+        knownParticipants
+            .Where(
+                x =>
+                    !string.IsNullOrWhiteSpace(x))
+            .OrderBy(
+                x =>
+                    string.Equals(
+                        x,
+                        name,
+                        StringComparison.OrdinalIgnoreCase)
+                        ? 0
+                        : 1)
+            .ThenBy(
+                x =>
+                    x,
+                StringComparer.OrdinalIgnoreCase);
+
+
+    private bool IsUserOnline(
+        string userName)
+    {
+        return onlineUsers.Contains(
+            userName);
+    }
+
+
+    // ============================================================
     // INITIALIZE
     // ============================================================
 
@@ -1075,8 +1226,7 @@ else
             }
 
 
-            if (!string.IsNullOrWhiteSpace(
-                    QueryName))
+            if (!string.IsNullOrWhiteSpace(QueryName))
             {
                 var existingName =
                     QueryName.Trim();
@@ -1089,8 +1239,7 @@ else
                 }
 
 
-                if (!string.IsNullOrWhiteSpace(
-                        existingName))
+                if (!string.IsNullOrWhiteSpace(existingName))
                 {
                     name =
                         existingName;
@@ -1123,7 +1272,6 @@ else
     private async Task JoinChat()
     {
         joinError = null;
-
         error = null;
 
 
@@ -1131,8 +1279,7 @@ else
             joinName.Trim();
 
 
-        if (string.IsNullOrWhiteSpace(
-                enteredName))
+        if (string.IsNullOrWhiteSpace(enteredName))
         {
             joinError =
                 "Please enter your name.";
@@ -1216,8 +1363,7 @@ else
     private async Task HandleJoinKeyDown(
         KeyboardEventArgs e)
     {
-        if (e.Key ==
-            "Enter")
+        if (e.Key == "Enter")
         {
             await JoinChat();
         }
@@ -1225,7 +1371,7 @@ else
 
 
     // ============================================================
-    // INITIALIZE SIGNALR
+    // INITIALIZE CHAT
     // ============================================================
 
     private async Task InitializeChatAsync()
@@ -1258,10 +1404,30 @@ else
                     item.Text,
                     item.SentAt,
                     item.IsRead,
+                    item.IsRead,
                     item.ReplyToMessageId,
                     item.ReplyToSender,
                     item.ReplyToText,
                     item.IsDeleted));
+        }
+
+
+        // --------------------------------------------------------
+        // PARTICIPANTS FROM HISTORY
+        // --------------------------------------------------------
+
+        knownParticipants.Add(
+            name);
+
+
+        foreach (var message in messages)
+        {
+            if (!string.IsNullOrWhiteSpace(
+                    message.Sender))
+            {
+                knownParticipants.Add(
+                    message.Sender);
+            }
         }
 
 
@@ -1338,11 +1504,161 @@ else
                             });
                     }
 
+
+                    if (!string.IsNullOrWhiteSpace(
+                            message.Sender))
+                    {
+                        knownParticipants.Add(
+                            message.Sender);
+                    }
+
+
                     StateHasChanged();
                 });
 
 
+                // ------------------------------------------------
+                // DELIVERY ACK
+                //
+                // The receiver tells the server that the message
+                // reached this client.
+                // ------------------------------------------------
+
+                if (!string.Equals(
+                        message.Sender,
+                        name,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    hub is not null &&
+                    connected)
+                {
+                    try
+                    {
+                        await hub.InvokeAsync(
+                            "ConfirmMessageDelivered",
+                            RoomCode,
+                            message.Id,
+                            name);
+                    }
+                    catch
+                    {
+                    }
+                }
+
+
                 await ScrollToBottomAsync();
+            });
+
+
+        // --------------------------------------------------------
+        // MESSAGE DELIVERED
+        // --------------------------------------------------------
+
+        hub.On<long>(
+            "MessageDelivered",
+            async messageId =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var index =
+                        messages.FindIndex(
+                            x =>
+                                x.Id == messageId);
+
+
+                    if (index >= 0)
+                    {
+                        var message =
+                            messages[index];
+
+
+                        // Only messages sent by the current user
+                        // should visually change here.
+                        if (message.Sender.Equals(
+                                name,
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            messages[index] =
+                                message with
+                                {
+                                    IsDelivered =
+                                        true
+                                };
+                        }
+                    }
+
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // PRESENCE SNAPSHOT
+        // --------------------------------------------------------
+
+        hub.On<List<string>>(
+            "RoomPresenceSnapshot",
+            async users =>
+            {
+                await InvokeAsync(() =>
+                {
+                    onlineUsers.Clear();
+
+
+                    foreach (var user in users)
+                    {
+                        if (string.IsNullOrWhiteSpace(
+                                user))
+                        {
+                            continue;
+                        }
+
+
+                        onlineUsers.Add(
+                            user);
+
+                        knownParticipants.Add(
+                            user);
+                    }
+
+
+                    StateHasChanged();
+                });
+            });
+
+
+        // --------------------------------------------------------
+        // PRESENCE CHANGED
+        // --------------------------------------------------------
+
+        hub.On<string, bool>(
+            "UserPresenceChanged",
+            async (userName, isOnline) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    if (!string.IsNullOrWhiteSpace(
+                            userName))
+                    {
+                        knownParticipants.Add(
+                            userName);
+
+
+                        if (isOnline)
+                        {
+                            onlineUsers.Add(
+                                userName);
+                        }
+                        else
+                        {
+                            onlineUsers.Remove(
+                                userName);
+                        }
+                    }
+
+
+                    StateHasChanged();
+                });
             });
 
 
@@ -1412,8 +1728,8 @@ else
                         messages[index] =
                             message with
                             {
-                                IsRead =
-                                    true
+                                IsRead = true,
+                                IsDelivered = true
                             };
 
 
@@ -1478,13 +1794,13 @@ else
 
                     if (index >= 0)
                     {
-                        messages.RemoveAt(index);
+                        messages.RemoveAt(
+                            index);
                     }
 
 
                     openMenuMessageId =
                         null;
-
 
                     reactionPickerMessageId =
                         null;
@@ -1544,7 +1860,6 @@ else
                     openMenuMessageId =
                         null;
 
-
                     reactionPickerMessageId =
                         null;
 
@@ -1585,7 +1900,8 @@ else
             {
                 await hub.InvokeAsync(
                     "JoinRoom",
-                    RoomCode);
+                    RoomCode,
+                    name);
 
 
                 connected =
@@ -1613,6 +1929,10 @@ else
                 false;
 
 
+            onlineUsers.Remove(
+                name);
+
+
             return InvokeAsync(
                 StateHasChanged);
         };
@@ -1627,7 +1947,8 @@ else
 
         await hub.InvokeAsync(
             "JoinRoom",
-            RoomCode);
+            RoomCode,
+            name);
 
 
         connected =
@@ -1694,7 +2015,6 @@ else
 
         openMenuMessageId =
             null;
-
 
         reactionPickerMessageId =
             null;
@@ -1774,7 +2094,7 @@ else
 
 
     // ============================================================
-    // REACTION PICKER
+    // REACTIONS
     // ============================================================
 
     private void ToggleReactionPicker(
@@ -1797,10 +2117,6 @@ else
         }
     }
 
-
-    // ============================================================
-    // REACT
-    // ============================================================
 
     private async Task ReactToMessage(
         MessageVm message,
@@ -1839,27 +2155,20 @@ else
     }
 
 
-    // ============================================================
-    // CHECK USER REACTION
-    // ============================================================
-
     private bool HasUserReaction(
         MessageVm message,
         string reaction)
     {
-        return message.ReactionItems.Any(
-            x =>
-                x.UserName.Equals(
-                    name,
-                    StringComparison.OrdinalIgnoreCase) &&
-                x.Reaction ==
-                    reaction);
+        return
+            message.ReactionItems.Any(
+                x =>
+                    x.UserName.Equals(
+                        name,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    x.Reaction ==
+                        reaction);
     }
 
-
-    // ============================================================
-    // REACTION GROUPS
-    // ============================================================
 
     private IEnumerable<ReactionGroupVm>
         GetReactionGroups(
@@ -1930,7 +2239,7 @@ else
 
 
     // ============================================================
-    // DELETE FOR ME
+    // DELETE
     // ============================================================
 
     private void AskDeleteForMe(
@@ -1956,10 +2265,6 @@ else
             null;
     }
 
-
-    // ============================================================
-    // UNSEND
-    // ============================================================
 
     private void AskUnsend(
         MessageVm message)
@@ -1992,10 +2297,6 @@ else
     }
 
 
-    // ============================================================
-    // CLOSE DELETE MODAL
-    // ============================================================
-
     private void CloseDeleteModal()
     {
         if (isDeleting)
@@ -2016,10 +2317,6 @@ else
             DeleteMode.DeleteForMe;
     }
 
-
-    // ============================================================
-    // CONFIRM DELETE
-    // ============================================================
 
     private async Task ConfirmDelete()
     {
@@ -2104,10 +2401,6 @@ else
     }
 
 
-    // ============================================================
-    // DELETE PREVIEW
-    // ============================================================
-
     private string GetDeletePreview(
         string? text)
     {
@@ -2141,7 +2434,8 @@ else
     private async Task HandleKeyDown(
         KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" &&
+        if (e.Key ==
+                "Enter" &&
             !e.ShiftKey)
         {
             await Send();
@@ -2171,7 +2465,6 @@ else
 
 
         typingCts?.Cancel();
-
         typingCts?.Dispose();
 
 
@@ -2184,10 +2477,6 @@ else
                 typingCts.Token);
     }
 
-
-    // ============================================================
-    // STOP TYPING
-    // ============================================================
 
     private async Task StopTypingLaterAsync(
         CancellationToken token)
@@ -2241,7 +2530,8 @@ else
         }
 
 
-        if (string.IsNullOrWhiteSpace(draft))
+        if (string.IsNullOrWhiteSpace(
+                draft))
         {
             return;
         }
@@ -2358,7 +2648,7 @@ else
 
 
     // ============================================================
-    // LEAVE MODAL
+    // LEAVE
     // ============================================================
 
     private void OpenLeaveModal()
@@ -2381,10 +2671,6 @@ else
     }
 
 
-    // ============================================================
-    // LEAVE ROOM
-    // ============================================================
-
     private async Task LeaveRoom()
     {
         if (isLeaving)
@@ -2400,7 +2686,6 @@ else
         try
         {
             typingCts?.Cancel();
-
             seenTimerCts?.Cancel();
 
 
@@ -2433,7 +2718,6 @@ else
             isLeaving =
                 false;
 
-
             showLeaveModal =
                 false;
 
@@ -2451,10 +2735,9 @@ else
     private bool IsMine(
         MessageVm message)
     {
-        return
-            message.Sender.Equals(
-                name,
-                StringComparison.OrdinalIgnoreCase);
+        return message.Sender.Equals(
+            name,
+            StringComparison.OrdinalIgnoreCase);
     }
 
 
@@ -2520,7 +2803,9 @@ else
     {
         if (!message.IsRead)
         {
-            return "Sent";
+            return message.IsDelivered
+                ? "Delivered"
+                : "Sent";
         }
 
 
@@ -2601,7 +2886,9 @@ else
     {
         if (!message.IsRead)
         {
-            return "Delivered";
+            return message.IsDelivered
+                ? "Delivered to recipient"
+                : "Message sent";
         }
 
 
@@ -2628,7 +2915,8 @@ else
         if (firstRender)
         {
             dotNetReference =
-                DotNetObjectReference.Create(this);
+                DotNetObjectReference.Create(
+                    this);
 
 
             try
@@ -2685,7 +2973,6 @@ else
         try
         {
             typingCts?.Cancel();
-
             typingCts?.Dispose();
         }
         catch
@@ -2696,7 +2983,6 @@ else
         try
         {
             seenTimerCts?.Cancel();
-
             seenTimerCts?.Dispose();
         }
         catch
@@ -2756,20 +3042,13 @@ else
         string Text,
         DateTime SentAt,
         bool IsRead,
+        bool IsDelivered,
         long? ReplyToMessageId,
         string? ReplyToSender,
         string? ReplyToText,
         bool IsDeleted = false,
         List<ReactionVm>? Reactions = null)
     {
-        /*
-         * IMPORTANT:
-         * Reactions can come back null from SignalR/database history.
-         * This property guarantees a non-null enumerable.
-         *
-         * This is the fix for CS8604 warnings caused by
-         * Any() and GroupBy() on message.Reactions.
-         */
         public IReadOnlyList<ReactionVm> ReactionItems =>
             Reactions ?? [];
     }
