@@ -76,10 +76,33 @@
                     Live
                 </span>
 
+
+                <!-- ====================================================
+                     CHULBUL SPECIAL BUTTON
+                     ==================================================== -->
+
+                <button class="chulbul-button"
+                        type="button"
+                        @onclick="OpenChulbul">
+
+                    <span class="chulbul-heart">
+                        ♥
+                    </span>
+
+                    Chulbul
+
+                </button>
+
+
                 <a class="nav-start-button"
                    href="#create-room">
+
                     Start chatting
-                    <span>→</span>
+
+                    <span>
+                        →
+                    </span>
+
                 </a>
 
             </div>
@@ -117,15 +140,22 @@
 
 
                     <h1 class="hero-title">
+
                         Talk privately.
-                        <span>Stay connected.</span>
+
+                        <span>
+                            Stay connected.
+                        </span>
+
                     </h1>
 
 
                     <p class="hero-description">
+
                         Create a private room, share one invite link,
                         and start a real-time conversation in seconds.
                         No account. No complicated setup.
+
                     </p>
 
 
@@ -137,12 +167,18 @@
                         <div class="hero-feature">
 
                             <div class="feature-icon blue">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
+
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
                                     <path d="M13.1 2 5.5 13h5.4L9.8 22l8.7-12h-5.7L13.1 2Z" />
+
                                 </svg>
+
                             </div>
 
                             <div>
+
                                 <h3>
                                     Real-time messaging
                                 </h3>
@@ -150,6 +186,7 @@
                                 <p>
                                     Messages appear instantly.
                                 </p>
+
                             </div>
 
                         </div>
@@ -158,14 +195,28 @@
                         <div class="hero-feature">
 
                             <div class="feature-icon green">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
+
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
                                     <path d="M7 10V7a5 5 0 0 1 10 0v3" />
-                                    <rect x="4" y="10" width="16" height="11" rx="2" />
-                                    <circle cx="12" cy="15.5" r="1.3" />
+
+                                    <rect x="4"
+                                          y="10"
+                                          width="16"
+                                          height="11"
+                                          rx="2" />
+
+                                    <circle cx="12"
+                                            cy="15.5"
+                                            r="1.3" />
+
                                 </svg>
+
                             </div>
 
                             <div>
+
                                 <h3>
                                     Private by design
                                 </h3>
@@ -173,6 +224,7 @@
                                 <p>
                                     One room. One shareable link.
                                 </p>
+
                             </div>
 
                         </div>
@@ -181,15 +233,28 @@
                         <div class="hero-feature">
 
                             <div class="feature-icon purple">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="9" cy="8" r="3" />
-                                    <circle cx="17" cy="9" r="2.5" />
+
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <circle cx="9"
+                                            cy="8"
+                                            r="3" />
+
+                                    <circle cx="17"
+                                            cy="9"
+                                            r="2.5" />
+
                                     <path d="M3.5 19c.6-3 2.5-4.7 5.5-4.7s4.9 1.7 5.5 4.7" />
+
                                     <path d="M14 15c2.9-.5 5.4.7 6.3 3.5" />
+
                                 </svg>
+
                             </div>
 
                             <div>
+
                                 <h3>
                                     Invite anyone
                                 </h3>
@@ -197,6 +262,7 @@
                                 <p>
                                     Share your room in one click.
                                 </p>
+
                             </div>
 
                         </div>
@@ -205,13 +271,24 @@
                         <div class="hero-feature">
 
                             <div class="feature-icon cyan">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <rect x="6" y="2.5" width="12" height="19" rx="2.2" />
+
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <rect x="6"
+                                          y="2.5"
+                                          width="12"
+                                          height="19"
+                                          rx="2.2" />
+
                                     <path d="M10 18.2h4" />
+
                                 </svg>
+
                             </div>
 
                             <div>
+
                                 <h3>
                                     Works everywhere
                                 </h3>
@@ -219,6 +296,7 @@
                                 <p>
                                     Desktop, tablet, or mobile.
                                 </p>
+
                             </div>
 
                         </div>
@@ -228,7 +306,9 @@
                 </div>
 
 
-                <!-- RIGHT: CREATE ROOM CARD -->
+                <!-- ====================================================
+                     RIGHT: CREATE ROOM CARD
+                     ==================================================== -->
 
                 <div class="room-card-wrap"
                      id="create-room">
@@ -284,9 +364,11 @@
 
 
                         <p class="room-card-description">
+
                             Enter your name to get started.
                             Then share the room link with the
                             person you want to chat with.
+
                         </p>
 
 
@@ -372,11 +454,21 @@
 
 
                         <div class="room-card-note">
+
                             No account required
-                            <span>•</span>
+
+                            <span>
+                                •
+                            </span>
+
                             Free to use
-                            <span>•</span>
+
+                            <span>
+                                •
+                            </span>
+
                             Ready in seconds
+
                         </div>
 
 
@@ -403,8 +495,10 @@
                                 </strong>
 
                                 <span>
+
                                     Anyone with the room link can enter
                                     this conversation.
+
                                 </span>
 
                             </div>
@@ -459,8 +553,10 @@
                         </h3>
 
                         <p>
+
                             Choose the display name you want
                             other people in the room to see.
+
                         </p>
 
                     </div>
@@ -481,8 +577,10 @@
                         </h3>
 
                         <p>
+
                             We generate a unique private room
                             link for your conversation.
+
                         </p>
 
                     </div>
@@ -503,8 +601,10 @@
                         </h3>
 
                         <p>
+
                             Share the link and talk together
                             in real time.
+
                         </p>
 
                     </div>
@@ -531,6 +631,7 @@
                     </div>
 
                     <div>
+
                         <strong>
                             Instant messaging
                         </strong>
@@ -538,6 +639,7 @@
                         <span>
                             Real-time and responsive
                         </span>
+
                     </div>
 
                 </div>
@@ -553,6 +655,7 @@
                     </div>
 
                     <div>
+
                         <strong>
                             Privacy first
                         </strong>
@@ -560,6 +663,7 @@
                         <span>
                             No signup required
                         </span>
+
                     </div>
 
                 </div>
@@ -575,6 +679,7 @@
                     </div>
 
                     <div>
+
                         <strong>
                             Easy to share
                         </strong>
@@ -582,6 +687,7 @@
                         <span>
                             One room link is all you need
                         </span>
+
                     </div>
 
                 </div>
@@ -647,6 +753,66 @@
 
     </footer>
 
+
+    <!-- ============================================================
+         CHULBUL SPECIAL POPUP
+         ============================================================ -->
+    @if (showChulbul)
+    {
+        <div class="chulbul-overlay"
+             @onclick="CloseChulbul">
+
+            <div class="chulbul-modal"
+                 @onclick:stopPropagation="true">
+
+                <button class="chulbul-close"
+                        type="button"
+                        aria-label="Close"
+                        @onclick="CloseChulbul">
+
+                    ×
+
+                </button>
+
+
+                <div class="chulbul-sparkles">
+                    ✦ ✧ ✦
+                </div>
+
+
+                <div class="chulbul-big-heart">
+                    ♥
+                </div>
+
+
+                <span class="chulbul-mini-title">
+                    A little something...
+                </span>
+
+
+                <h2>
+                    For my Chulbul ❤️
+                </h2>
+
+
+                <p>
+                    Some conversations are just conversations.
+                    And some become memories. ✨
+                </p>
+
+
+                <div class="chulbul-divider"></div>
+
+
+                <span class="chulbul-signature">
+                    Made with a little extra love.
+                </span>
+
+            </div>
+
+        </div>
+    }
+
 </div>
 
 
@@ -658,6 +824,28 @@
 
     private bool creating;
 
+    private bool showChulbul;
+
+
+    // ============================================================
+    // CHULBUL POPUP
+    // ============================================================
+
+    private void OpenChulbul()
+    {
+        showChulbul = true;
+    }
+
+
+    private void CloseChulbul()
+    {
+        showChulbul = false;
+    }
+
+
+    // ============================================================
+    // CREATE ROOM
+    // ============================================================
 
     private async Task CreateRoom()
     {
@@ -719,6 +907,10 @@
     }
 
 
+    // ============================================================
+    // ENTER KEY
+    // ============================================================
+
     private async Task HandleNameKeyDown(
         KeyboardEventArgs e)
     {
@@ -728,4 +920,5 @@
             await CreateRoom();
         }
     }
+
 }

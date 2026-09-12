@@ -22,10 +22,11 @@ builder.Services.AddSignalR();
 
 builder.Services.AddDbContextFactory<ChatDbContext>(
     options =>
-        options.UseSqlite(
+        options.UseNpgsql(
             builder.Configuration
                 .GetConnectionString("ChatDb")
-            ?? "Data Source=chatapp.db"));
+            ?? throw new InvalidOperationException(
+                "Connection string 'ChatDb' was not found.")));
 
 
 builder.Services.AddScoped<ChatService>();
@@ -44,7 +45,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(
             ForwardedHeaders.XForwardedProto |
             ForwardedHeaders.XForwardedHost;
 
-        // Local development / ngrok
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
     });
@@ -60,7 +60,7 @@ var app =
 
 // ================================================================
 // FORWARDED HEADERS
-// MUST RUN EARLY IN THE PIPELINE
+// MUST RUN EARLY
 // ================================================================
 
 app.UseForwardedHeaders();
@@ -97,101 +97,6 @@ app.MapHub<ChatHub>("/chathub");
 app.MapRazorComponents<
         ChatApp.Web.Components.App>()
     .AddInteractiveServerRenderMode();
-
-
-// ================================================================
-// DATABASE INITIALIZATION
-// ================================================================
-
-await using (
-    var scope =
-        app.Services.CreateAsyncScope())
-{
-    var db =
-        scope.ServiceProvider
-            .GetRequiredService<ChatDbContext>();
-
-
-    await db.Database.EnsureCreatedAsync();
-
-
-    // ============================================================
-    // READ STATUS COLUMNS
-    // ============================================================
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            ALTER TABLE Messages
-            ADD COLUMN IsRead INTEGER NOT NULL DEFAULT 0;
-            """);
-    }
-    catch
-    {
-        // Column probably already exists.
-    }
-
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            ALTER TABLE Messages
-            ADD COLUMN ReadAt TEXT NULL;
-            """);
-    }
-    catch
-    {
-        // Column probably already exists.
-    }
-
-
-    // ============================================================
-    // REPLY COLUMNS
-    // ============================================================
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            ALTER TABLE Messages
-            ADD COLUMN ReplyToMessageId INTEGER NULL;
-            """);
-    }
-    catch
-    {
-        // Column probably already exists.
-    }
-
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            ALTER TABLE Messages
-            ADD COLUMN ReplyToSender TEXT NULL;
-            """);
-    }
-    catch
-    {
-        // Column probably already exists.
-    }
-
-
-    try
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            ALTER TABLE Messages
-            ADD COLUMN ReplyToText TEXT NULL;
-            """);
-    }
-    catch
-    {
-        // Column probably already exists.
-    }
-}
 
 
 // ================================================================

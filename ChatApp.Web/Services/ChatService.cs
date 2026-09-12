@@ -1,6 +1,5 @@
 ﻿using ChatApp.Web.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 using System.Security.Cryptography;
 
 namespace ChatApp.Web.Services;
@@ -8,221 +7,6 @@ namespace ChatApp.Web.Services;
 public sealed class ChatService(
     IDbContextFactory<ChatDbContext> factory)
 {
-    // ============================================================
-    // ENSURE DATABASE SCHEMA
-    // ============================================================
-
-    private async Task EnsureDeleteSchemaAsync(
-        ChatDbContext db)
-    {
-        var connection =
-            db.Database.GetDbConnection();
-
-        if (connection.State !=
-            ConnectionState.Open)
-        {
-            await connection.OpenAsync();
-        }
-
-
-        // ========================================================
-        // IsDeleted
-        // ========================================================
-
-        if (!await ColumnExistsAsync(
-                connection,
-                "Messages",
-                "IsDeleted"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                ALTER TABLE Messages
-                ADD COLUMN IsDeleted INTEGER NOT NULL DEFAULT 0;
-                """);
-        }
-
-
-        // ========================================================
-        // DeletedAt
-        // ========================================================
-
-        if (!await ColumnExistsAsync(
-                connection,
-                "Messages",
-                "DeletedAt"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                ALTER TABLE Messages
-                ADD COLUMN DeletedAt TEXT NULL;
-                """);
-        }
-
-
-        // ========================================================
-        // DeletedBy
-        // ========================================================
-
-        if (!await ColumnExistsAsync(
-                connection,
-                "Messages",
-                "DeletedBy"))
-        {
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                ALTER TABLE Messages
-                ADD COLUMN DeletedBy TEXT NULL;
-                """);
-        }
-
-
-        // ========================================================
-        // DELETE FOR ME TABLE
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS MessageHiddenForUsers
-            (
-                Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                MessageId INTEGER NOT NULL,
-                UserName TEXT NOT NULL,
-                HiddenAt TEXT NOT NULL
-            );
-            """);
-
-
-        // ========================================================
-        // DELETE UNIQUE INDEX
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            IX_MessageHiddenForUsers_MessageId_UserName
-            ON MessageHiddenForUsers(MessageId, UserName);
-            """);
-
-
-        // ========================================================
-        // DELETE USER INDEX
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE INDEX IF NOT EXISTS
-            IX_MessageHiddenForUsers_UserName
-            ON MessageHiddenForUsers(UserName);
-            """);
-
-
-        // ========================================================
-        // REACTION TABLE
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE TABLE IF NOT EXISTS MessageReactions
-            (
-                Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                MessageId INTEGER NOT NULL,
-                UserName TEXT NOT NULL,
-                Reaction TEXT NOT NULL,
-                CreatedAt TEXT NOT NULL
-            );
-            """);
-
-
-        // ========================================================
-        // REACTION UNIQUE INDEX
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            IX_MessageReactions_MessageId_UserName
-            ON MessageReactions(MessageId, UserName);
-            """);
-
-
-        // ========================================================
-        // REACTION MESSAGE INDEX
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE INDEX IF NOT EXISTS
-            IX_MessageReactions_MessageId
-            ON MessageReactions(MessageId);
-            """);
-
-
-        // ========================================================
-        // REACTION USER INDEX
-        // ========================================================
-
-        await db.Database.ExecuteSqlRawAsync(
-            """
-            CREATE INDEX IF NOT EXISTS
-            IX_MessageReactions_UserName
-            ON MessageReactions(UserName);
-            """);
-    }
-
-
-    // ============================================================
-    // CHECK COLUMN EXISTS
-    // ============================================================
-
-    private static async Task<bool> ColumnExistsAsync(
-        System.Data.Common.DbConnection connection,
-        string tableName,
-        string columnName)
-    {
-        await using var command =
-            connection.CreateCommand();
-
-        command.CommandText =
-            """
-            SELECT COUNT(*)
-            FROM pragma_table_info(@tableName)
-            WHERE name = @columnName;
-            """;
-
-
-        var tableParameter =
-            command.CreateParameter();
-
-        tableParameter.ParameterName =
-            "@tableName";
-
-        tableParameter.Value =
-            tableName;
-
-        command.Parameters.Add(
-            tableParameter);
-
-
-        var columnParameter =
-            command.CreateParameter();
-
-        columnParameter.ParameterName =
-            "@columnName";
-
-        columnParameter.Value =
-            columnName;
-
-        command.Parameters.Add(
-            columnParameter);
-
-
-        var result =
-            await command.ExecuteScalarAsync();
-
-        return Convert.ToInt32(result) > 0;
-    }
-
-
     // ============================================================
     // CREATE ROOM
     // ============================================================
@@ -232,9 +16,7 @@ public sealed class ChatService(
         await using var db =
             await factory.CreateDbContextAsync();
 
-
         string code;
-
 
         do
         {
@@ -247,16 +29,13 @@ public sealed class ChatService(
             await db.Rooms.AnyAsync(
                 x => x.Code == code));
 
-
         db.Rooms.Add(
             new ChatRoom
             {
                 Code = code
             });
 
-
         await db.SaveChangesAsync();
-
 
         return code;
     }
@@ -273,10 +52,8 @@ public sealed class ChatService(
             code.Trim()
                 .ToLowerInvariant();
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
 
         return await db.Rooms
             .AnyAsync(
@@ -296,17 +73,11 @@ public sealed class ChatService(
             code.Trim()
                 .ToLowerInvariant();
 
-
         viewerName =
             viewerName.Trim();
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var hiddenIds =
             string.IsNullOrWhiteSpace(viewerName)
@@ -323,7 +94,6 @@ public sealed class ChatService(
                         .ToListAsync()
                 ).ToHashSet();
 
-
         var result =
             await db.Messages
                 .Where(
@@ -335,12 +105,10 @@ public sealed class ChatService(
                 .Take(500)
                 .ToListAsync();
 
-
         if (hiddenIds.Count == 0)
         {
             return result;
         }
-
 
         return result
             .Where(
@@ -364,7 +132,6 @@ public sealed class ChatService(
                 .Distinct()
                 .ToList();
 
-
         if (ids.Count == 0)
         {
             return new Dictionary<
@@ -372,13 +139,8 @@ public sealed class ChatService(
                 List<ReactionInfo>>();
         }
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var rows =
             await db.MessageReactions
@@ -390,7 +152,6 @@ public sealed class ChatService(
                     x =>
                         x.CreatedAt)
                 .ToListAsync();
-
 
         return rows
             .GroupBy(
@@ -423,14 +184,11 @@ public sealed class ChatService(
             code.Trim()
                 .ToLowerInvariant();
 
-
         sender =
             sender.Trim();
 
-
         text =
             text.Trim();
-
 
         if (string.IsNullOrWhiteSpace(sender))
         {
@@ -438,13 +196,11 @@ public sealed class ChatService(
                 "Name is required.");
         }
 
-
         if (string.IsNullOrWhiteSpace(text))
         {
             throw new ArgumentException(
                 "Message cannot be empty.");
         }
-
 
         if (sender.Length > 40)
         {
@@ -452,26 +208,19 @@ public sealed class ChatService(
                 sender[..40];
         }
 
-
         if (text.Length > 2000)
         {
-            throw new ArgumentException(
-                "Message is too long.");
+            text =
+                text[..2000];
         }
-
 
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var roomExists =
             await db.Rooms.AnyAsync(
                 x =>
                     x.Code == code);
-
 
         if (!roomExists)
         {
@@ -479,14 +228,11 @@ public sealed class ChatService(
                 "Room not found.");
         }
 
-
         string? replySender =
             null;
 
-
         string? replyText =
             null;
-
 
         if (replyToMessageId.HasValue)
         {
@@ -500,24 +246,20 @@ public sealed class ChatService(
                             x.RoomCode ==
                             code);
 
-
             if (repliedMessage is not null &&
                 !repliedMessage.IsDeleted)
             {
                 replySender =
                     repliedMessage.Sender;
 
-
                 replyText =
                     repliedMessage.Text;
-
 
                 if (replySender.Length > 40)
                 {
                     replySender =
                         replySender[..40];
                 }
-
 
                 if (replyText.Length > 500)
                 {
@@ -532,7 +274,6 @@ public sealed class ChatService(
                     null;
             }
         }
-
 
         var message =
             new ChatMessage
@@ -574,13 +315,10 @@ public sealed class ChatService(
                     null
             };
 
-
         db.Messages.Add(
             message);
 
-
         await db.SaveChangesAsync();
-
 
         return message;
     }
@@ -599,10 +337,8 @@ public sealed class ChatService(
             roomCode.Trim()
                 .ToLowerInvariant();
 
-
         readerName =
             readerName.Trim();
-
 
         if (string.IsNullOrWhiteSpace(
                 readerName))
@@ -610,13 +346,8 @@ public sealed class ChatService(
             return false;
         }
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var message =
             await db.Messages
@@ -627,13 +358,11 @@ public sealed class ChatService(
                         x.RoomCode ==
                         roomCode);
 
-
         if (message is null ||
             message.IsDeleted)
         {
             return false;
         }
-
 
         if (message.Sender.Equals(
                 readerName,
@@ -642,23 +371,18 @@ public sealed class ChatService(
             return false;
         }
 
-
         if (message.IsRead)
         {
             return false;
         }
 
-
         message.IsRead =
             true;
-
 
         message.ReadAt =
             DateTime.UtcNow;
 
-
         await db.SaveChangesAsync();
-
 
         return true;
     }
@@ -677,10 +401,8 @@ public sealed class ChatService(
             roomCode.Trim()
                 .ToLowerInvariant();
 
-
         userName =
             userName.Trim();
-
 
         if (string.IsNullOrWhiteSpace(
                 userName))
@@ -688,13 +410,8 @@ public sealed class ChatService(
             return false;
         }
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var message =
             await db.Messages
@@ -706,12 +423,10 @@ public sealed class ChatService(
                         x.RoomCode ==
                         roomCode);
 
-
         if (message is null)
         {
             return false;
         }
-
 
         var alreadyHidden =
             await db.MessageHiddenForUsers
@@ -722,12 +437,10 @@ public sealed class ChatService(
                         x.UserName ==
                         userName);
 
-
         if (alreadyHidden)
         {
             return true;
         }
-
 
         db.MessageHiddenForUsers.Add(
             new MessageHiddenForUser
@@ -742,9 +455,7 @@ public sealed class ChatService(
                     DateTime.UtcNow
             });
 
-
         await db.SaveChangesAsync();
-
 
         return true;
     }
@@ -763,10 +474,8 @@ public sealed class ChatService(
             roomCode.Trim()
                 .ToLowerInvariant();
 
-
         senderName =
             senderName.Trim();
-
 
         if (string.IsNullOrWhiteSpace(
                 senderName))
@@ -774,13 +483,8 @@ public sealed class ChatService(
             return false;
         }
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var message =
             await db.Messages
@@ -791,12 +495,10 @@ public sealed class ChatService(
                         x.RoomCode ==
                         roomCode);
 
-
         if (message is null)
         {
             return false;
         }
-
 
         if (!message.Sender.Equals(
                 senderName,
@@ -805,40 +507,31 @@ public sealed class ChatService(
             return false;
         }
 
-
         if (message.IsDeleted)
         {
             return true;
         }
 
-
         message.IsDeleted =
             true;
-
 
         message.DeletedAt =
             DateTime.UtcNow;
 
-
         message.DeletedBy =
             senderName;
-
 
         message.Text =
             "[This message was deleted]";
 
-
         message.ReplyToMessageId =
             null;
-
 
         message.ReplyToSender =
             null;
 
-
         message.ReplyToText =
             null;
-
 
         // Remove reactions when message is unsent.
         await db.MessageReactions
@@ -847,9 +540,7 @@ public sealed class ChatService(
                     x.MessageId == messageId)
             .ExecuteDeleteAsync();
 
-
         await db.SaveChangesAsync();
-
 
         return true;
     }
@@ -869,14 +560,11 @@ public sealed class ChatService(
             roomCode.Trim()
                 .ToLowerInvariant();
 
-
         userName =
             userName.Trim();
 
-
         reaction =
             reaction.Trim();
-
 
         if (string.IsNullOrWhiteSpace(userName))
         {
@@ -884,13 +572,11 @@ public sealed class ChatService(
                 "User name is required.");
         }
 
-
         if (string.IsNullOrWhiteSpace(reaction))
         {
             throw new ArgumentException(
                 "Reaction is required.");
         }
-
 
         var allowedReactions =
             new HashSet<string>
@@ -903,7 +589,6 @@ public sealed class ChatService(
                 "👎"
             };
 
-
         if (!allowedReactions.Contains(
                 reaction))
         {
@@ -911,13 +596,8 @@ public sealed class ChatService(
                 "Invalid reaction.");
         }
 
-
         await using var db =
             await factory.CreateDbContextAsync();
-
-
-        await EnsureDeleteSchemaAsync(db);
-
 
         var message =
             await db.Messages
@@ -929,20 +609,17 @@ public sealed class ChatService(
                         x.RoomCode ==
                         roomCode);
 
-
         if (message is null)
         {
             throw new InvalidOperationException(
                 "Message not found.");
         }
 
-
         if (message.IsDeleted)
         {
             throw new InvalidOperationException(
                 "Deleted messages cannot be reacted to.");
         }
-
 
         var existingReaction =
             await db.MessageReactions
@@ -953,10 +630,8 @@ public sealed class ChatService(
                         x.UserName ==
                         userName);
 
-
         var removed =
             false;
-
 
         if (existingReaction is null)
         {
@@ -993,9 +668,7 @@ public sealed class ChatService(
                 DateTime.UtcNow;
         }
 
-
         await db.SaveChangesAsync();
-
 
         var reactions =
             await db.MessageReactions
@@ -1013,7 +686,6 @@ public sealed class ChatService(
                             x.UserName,
                             x.Reaction))
                 .ToListAsync();
-
 
         return new ReactionResult(
             removed,

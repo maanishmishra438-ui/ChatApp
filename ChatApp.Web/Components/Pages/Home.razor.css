@@ -1152,3 +1152,286 @@
         justify-content: center;
     }
 }
+/* ================================================================
+   CHULBUL SPECIAL BUTTON
+   Small personal touch
+   ================================================================ */
+
+.chulbul-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border: 1px solid rgba(244, 114, 182, 0.22);
+    border-radius: 999px;
+    color: #f9a8d4;
+    background: linear-gradient( 135deg, rgba(244, 63, 94, 0.08), rgba(192, 132, 252, 0.07) );
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(244, 63, 94, 0.08), inset 0 1px 0 rgba(255,255,255,0.03);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .chulbul-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(251, 113, 133, 0.45);
+        background: linear-gradient( 135deg, rgba(244, 63, 94, 0.15), rgba(192, 132, 252, 0.11) );
+        box-shadow: 0 12px 28px rgba(244, 63, 94, 0.14), 0 0 20px rgba(244, 114, 182, 0.06);
+    }
+
+    .chulbul-button:active {
+        transform: scale(0.97);
+    }
+
+.chulbul-heart {
+    color: #fb7185;
+    font-size: 13px;
+    line-height: 1;
+    animation: chulbulHeartbeat 1.8s ease-in-out infinite;
+}
+
+@keyframes chulbulHeartbeat {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    12% {
+        transform: scale(1.18);
+    }
+
+    22% {
+        transform: scale(1);
+    }
+}
+
+
+/* ================================================================
+   CHULBUL OVERLAY
+   ================================================================ */
+
+.chulbul-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(2, 5, 15, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: chulbulOverlayIn 0.22s ease;
+}
+
+
+/* ================================================================
+   CHULBUL MODAL
+   ================================================================ */
+
+.chulbul-modal {
+    position: relative;
+    width: min(430px, 100%);
+    padding: 40px 30px 30px;
+    text-align: center;
+    border: 1px solid rgba(244, 114, 182, 0.2);
+    border-radius: 28px;
+    background: radial-gradient( circle at 50% 0%, rgba(236, 72, 153, 0.14), transparent 34% ), linear-gradient( 145deg, rgba(21, 18, 43, 0.98), rgba(8, 11, 25, 0.98) );
+    box-shadow: 0 35px 90px rgba(0,0,0,0.52), 0 0 70px rgba(236, 72, 153, 0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+    animation: chulbulModalIn 0.32s cubic-bezier(.2,.8,.2,1);
+}
+
+
+/* ================================================================
+   CLOSE
+   ================================================================ */
+
+.chulbul-close {
+    position: absolute;
+    top: 13px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 50%;
+    color: #7f8aa3;
+    background: rgba(255,255,255,0.035);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+    .chulbul-close:hover {
+        color: #fda4af;
+        background: rgba(244, 63, 94, 0.1);
+        transform: rotate(8deg);
+    }
+
+
+/* ================================================================
+   HEART
+   ================================================================ */
+
+.chulbul-big-heart {
+    width: 78px;
+    height: 78px;
+    margin: 0 auto 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: linear-gradient( 145deg, #fb7185, #e11d48 );
+    font-size: 34px;
+    box-shadow: 0 16px 35px rgba(225, 29, 72, 0.3), 0 0 28px rgba(251, 113, 133, 0.12);
+    animation: chulbulHeartPop 0.65s ease;
+}
+
+    .chulbul-big-heart::before {
+        content: "";
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(244, 63, 94, 0.08);
+        filter: blur(18px);
+        pointer-events: none;
+    }
+
+
+/* ================================================================
+   CONTENT
+   ================================================================ */
+
+.chulbul-sparkles {
+    margin-bottom: 10px;
+    color: #f9a8d4;
+    font-size: 17px;
+    letter-spacing: 7px;
+}
+
+.chulbul-mini-title {
+    display: block;
+    margin-bottom: 7px;
+    color: #fb7185;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.2px;
+    text-transform: uppercase;
+}
+
+.chulbul-modal h2 {
+    margin: 0;
+    color: #f8f8ff;
+    font-size: clamp(27px, 5vw, 36px);
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+}
+
+.chulbul-modal p {
+    max-width: 335px;
+    margin: 16px auto 0;
+    color: #8f9bb3;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.chulbul-divider {
+    width: 50px;
+    height: 2px;
+    margin: 22px auto;
+    border-radius: 999px;
+    background: linear-gradient( 90deg, #fb7185, #c084fc );
+}
+
+.chulbul-signature {
+    color: #69758d;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* ================================================================
+   ANIMATIONS
+   ================================================================ */
+
+@keyframes chulbulOverlayIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes chulbulModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes chulbulHeartPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    65% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+
+@media (max-width: 760px) {
+
+    .chulbul-button {
+        padding: 9px 11px;
+        font-size: 11px;
+    }
+
+        .chulbul-button .chulbul-heart {
+            font-size: 12px;
+        }
+
+    .chulbul-overlay {
+        padding: 16px;
+    }
+
+    .chulbul-modal {
+        padding: 36px 22px 26px;
+        border-radius: 24px;
+    }
+
+    .chulbul-big-heart {
+        width: 68px;
+        height: 68px;
+        font-size: 30px;
+    }
+
+    .chulbul-modal h2 {
+        font-size: 28px;
+    }
+
+    .chulbul-modal p {
+        font-size: 13px;
+    }
+}
