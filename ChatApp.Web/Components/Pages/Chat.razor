@@ -181,6 +181,34 @@ else
 
                 </span>
 
+                <!-- =====================================================
+                     NOTIFICATIONS
+                     ===================================================== -->
+
+                <button type="button"
+                        class="share-button notification-button"
+                        @onclick="EnableNotifications"
+                        disabled="@notificationBusy">
+
+                    <span class="share-icon">
+                        🔔
+                    </span>
+
+                    @if (notificationBusy)
+                    {
+                        <span>Enabling...</span>
+                    }
+                    else if (notificationsEnabled)
+                    {
+                        <span>Notifications on</span>
+                    }
+                    else
+                    {
+                        <span>Enable notifications</span>
+                    }
+
+                </button>
+
                 <button class="share-button"
                         @onclick="CopyInvite">
 
@@ -777,6 +805,14 @@ else
         </div>
     }
 
+    <!-- NOTIFICATION ERROR -->
+    @if (!string.IsNullOrWhiteSpace(notificationError))
+    {
+        <div class="toast notification-error-toast">
+            @notificationError
+        </div>
+    }
+
 
     <!-- LEAVE MODAL -->
     @if (showLeaveModal)
@@ -977,6 +1013,19 @@ else
 
     private DotNetObjectReference<Chat>?
         dotNetReference;
+
+    private IJSObjectReference? pushModule;
+
+
+    // ============================================================
+    // NOTIFICATIONS
+    // ============================================================
+
+    private bool notificationsEnabled;
+
+    private bool notificationBusy;
+
+    private string? notificationError;
 
 
     // ============================================================
@@ -1185,7 +1234,6 @@ else
                     queryName.ToString();
             }
 
-            // Fallback origin from the current browser/navigation URL.
             publicOrigin =
                 uri.GetLeftPart(
                     UriPartial.Authority);
@@ -1828,11 +1876,99 @@ else
 
 
     // ============================================================
+    // ENABLE NOTIFICATIONS
+    // ============================================================
+
+    private async Task EnableNotifications()
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(RoomCode))
+        {
+            return;
+        }
+
+        notificationBusy = true;
+        notificationError = null;
+
+        try
+        {
+            if (pushModule is null)
+            {
+                pushModule =
+                    await JS.InvokeAsync<IJSObjectReference>(
+                        "import",
+                        "/js/pushNotifications.js");
+            }
+
+            var success =
+                await pushModule.InvokeAsync<bool>(
+                    "enable",
+                    name,
+                    RoomCode);
+
+            notificationsEnabled = success;
+
+            if (success)
+            {
+                toastMessage =
+                    "Notifications enabled 🔔";
+
+                showToast = true;
+
+                _ = HideToastLaterAsync();
+            }
+            else
+            {
+                notificationError =
+                    "Notification permission was not granted.";
+            }
+        }
+        catch (JSException ex)
+        {
+            notificationError =
+                $"Notification setup failed: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            notificationError =
+                $"Unable to enable notifications: {ex.Message}";
+        }
+        finally
+        {
+            notificationBusy = false;
+
+            await InvokeAsync(
+                StateHasChanged);
+        }
+    }
+
+
+    private async Task HideToastLaterAsync()
+    {
+        try
+        {
+            await Task.Delay(1800);
+
+            await InvokeAsync(() =>
+            {
+                showToast = false;
+
+                StateHasChanged();
+            });
+        }
+        catch
+        {
+        }
+    }
+
+
+    // ============================================================
     // MARK VISIBLE MESSAGE
     // ============================================================
 
     [JSInvokable]
-    public async Task MarkVisibleMessage(long messageId)
+    public async Task MarkVisibleMessage(
+        long messageId)
     {
         if (hub is null ||
             !connected ||
@@ -1872,7 +2008,8 @@ else
         openMenuMessageId = null;
         reactionPickerMessageId = null;
 
-        await InvokeAsync(StateHasChanged);
+        await InvokeAsync(
+            StateHasChanged);
 
         try
         {
@@ -2341,8 +2478,6 @@ else
     {
         try
         {
-            // Always get the actual browser origin.
-            // This is important when running behind ngrok.
             try
             {
                 var browserOrigin =
@@ -2358,7 +2493,6 @@ else
             }
             catch
             {
-                // Keep the server/navigation fallback.
             }
 
             var inviteUrl =
@@ -2369,7 +2503,7 @@ else
                 inviteUrl);
 
             toastMessage =
-                $"Invite link copied";
+                "Invite link copied";
 
             showToast = true;
 
@@ -2520,79 +2654,6 @@ else
 
 
     // ============================================================
-    // SEEN TEXT
-    // ============================================================
-
-    private string GetSeenText(
-        MessageVm message)
-    {
-        if (!message.IsRead)
-        {
-            return message.IsDelivered
-                ? "Delivered"
-                : "Sent";
-        }
-
-        if (!seenTimes.TryGetValue(
-                message.Id,
-                out var seenAt))
-        {
-            return "Seen";
-        }
-
-        var elapsed =
-            DateTime.UtcNow - seenAt;
-
-        if (elapsed.TotalSeconds < 60)
-        {
-            return "Seen just now";
-        }
-
-        if (elapsed.TotalMinutes < 60)
-        {
-            var minutes =
-                Math.Max(
-                    1,
-                    (int)Math.Floor(
-                        elapsed.TotalMinutes));
-
-            return minutes == 1
-                ? "Seen 1 min ago"
-                : $"Seen {minutes} min ago";
-        }
-
-        if (elapsed.TotalHours < 24)
-        {
-            var hours =
-                Math.Max(
-                    1,
-                    (int)Math.Floor(
-                        elapsed.TotalHours));
-
-            return hours == 1
-                ? "Seen 1 hr ago"
-                : $"Seen {hours} hrs ago";
-        }
-
-        if (elapsed.TotalDays < 7)
-        {
-            var days =
-                Math.Max(
-                    1,
-                    (int)Math.Floor(
-                        elapsed.TotalDays));
-
-            return days == 1
-                ? "Seen 1 day ago"
-                : $"Seen {days} days ago";
-        }
-
-        return
-            $"Seen {seenAt.ToLocalTime():dd MMM}";
-    }
-
-
-    // ============================================================
     // SEEN TITLE
     // ============================================================
 
@@ -2638,6 +2699,19 @@ else
             }
             catch
             {
+            }
+
+            // Load push notification JavaScript module.
+            try
+            {
+                pushModule =
+                    await JS.InvokeAsync<IJSObjectReference>(
+                        "import",
+                        "/js/pushNotifications.js");
+            }
+            catch
+            {
+                pushModule = null;
             }
 
             // Most reliable source for the public URL.
@@ -2739,6 +2813,17 @@ else
         try
         {
             dotNetReference?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            if (pushModule is not null)
+            {
+                await pushModule.DisposeAsync();
+            }
         }
         catch
         {

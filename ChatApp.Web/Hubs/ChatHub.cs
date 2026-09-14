@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace ChatApp.Web.Hubs;
 
-public sealed class ChatHub(ChatService chatService) : Hub
+public sealed class ChatHub(
+    ChatService chatService,
+    PushNotificationService pushNotificationService) : Hub
 {
     // ============================================================
     // PRESENCE STATE
@@ -203,6 +205,10 @@ public sealed class ChatHub(ChatService chatService) : Hub
         }
 
 
+        // --------------------------------------------------------
+        // SAVE MESSAGE
+        // --------------------------------------------------------
+
         var message =
             await chatService.SaveMessageAsync(
                 roomCode,
@@ -210,6 +216,10 @@ public sealed class ChatHub(ChatService chatService) : Hub
                 text,
                 replyToMessageId);
 
+
+        // --------------------------------------------------------
+        // REAL-TIME SIGNALR MESSAGE
+        // --------------------------------------------------------
 
         await Clients.Group(roomCode)
             .SendAsync(
@@ -234,6 +244,25 @@ public sealed class ChatHub(ChatService chatService) : Hub
                     reactions =
                         Array.Empty<object>()
                 });
+
+
+        // --------------------------------------------------------
+        // WEB PUSH NOTIFICATION
+        // --------------------------------------------------------
+
+        try
+        {
+            await pushNotificationService
+                .SendNewMessageNotificationAsync(
+                    roomCode,
+                    sender,
+                    message);
+        }
+        catch
+        {
+            // Push notification failure must never
+            // break normal chat messaging.
+        }
     }
 
 

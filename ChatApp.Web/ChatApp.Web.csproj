@@ -6,6 +6,7 @@
     <UserSecretsId>f655456f-1f12-484f-ae75-df775aef1bc1</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Lib.Net.Http.WebPush" Version="3.3.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

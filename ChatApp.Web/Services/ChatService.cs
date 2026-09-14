@@ -242,9 +242,9 @@ public sealed class ChatService(
                     .FirstOrDefaultAsync(
                         x =>
                             x.Id ==
-                            replyToMessageId.Value &&
+                                replyToMessageId.Value &&
                             x.RoomCode ==
-                            code);
+                                code);
 
             if (repliedMessage is not null &&
                 !repliedMessage.IsDeleted)
@@ -354,9 +354,9 @@ public sealed class ChatService(
                 .FirstOrDefaultAsync(
                     x =>
                         x.Id ==
-                        messageId &&
+                            messageId &&
                         x.RoomCode ==
-                        roomCode);
+                            roomCode);
 
         if (message is null ||
             message.IsDeleted)
@@ -419,9 +419,9 @@ public sealed class ChatService(
                 .FirstOrDefaultAsync(
                     x =>
                         x.Id ==
-                        messageId &&
+                            messageId &&
                         x.RoomCode ==
-                        roomCode);
+                            roomCode);
 
         if (message is null)
         {
@@ -433,9 +433,9 @@ public sealed class ChatService(
                 .AnyAsync(
                     x =>
                         x.MessageId ==
-                        messageId &&
+                            messageId &&
                         x.UserName ==
-                        userName);
+                            userName);
 
         if (alreadyHidden)
         {
@@ -491,9 +491,9 @@ public sealed class ChatService(
                 .FirstOrDefaultAsync(
                     x =>
                         x.Id ==
-                        messageId &&
+                            messageId &&
                         x.RoomCode ==
-                        roomCode);
+                            roomCode);
 
         if (message is null)
         {
@@ -537,7 +537,8 @@ public sealed class ChatService(
         await db.MessageReactions
             .Where(
                 x =>
-                    x.MessageId == messageId)
+                    x.MessageId ==
+                    messageId)
             .ExecuteDeleteAsync();
 
         await db.SaveChangesAsync();
@@ -605,9 +606,9 @@ public sealed class ChatService(
                 .FirstOrDefaultAsync(
                     x =>
                         x.Id ==
-                        messageId &&
+                            messageId &&
                         x.RoomCode ==
-                        roomCode);
+                            roomCode);
 
         if (message is null)
         {
@@ -626,9 +627,9 @@ public sealed class ChatService(
                 .FirstOrDefaultAsync(
                     x =>
                         x.MessageId ==
-                        messageId &&
+                            messageId &&
                         x.UserName ==
-                        userName);
+                            userName);
 
         var removed =
             false;
@@ -657,7 +658,8 @@ public sealed class ChatService(
             db.MessageReactions.Remove(
                 existingReaction);
 
-            removed = true;
+            removed =
+                true;
         }
         else
         {
@@ -690,6 +692,161 @@ public sealed class ChatService(
         return new ReactionResult(
             removed,
             reactions);
+    }
+
+
+    // ============================================================
+    // SAVE PUSH SUBSCRIPTION
+    // ============================================================
+
+    public async Task SavePushSubscriptionAsync(
+        string userName,
+        string roomCode,
+        string endpoint,
+        string p256dh,
+        string auth)
+    {
+        userName =
+            userName.Trim();
+
+        roomCode =
+            roomCode.Trim()
+                .ToLowerInvariant();
+
+        endpoint =
+            endpoint.Trim();
+
+        p256dh =
+            p256dh.Trim();
+
+        auth =
+            auth.Trim();
+
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            throw new ArgumentException(
+                "User name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(roomCode))
+        {
+            throw new ArgumentException(
+                "Room code is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(endpoint) ||
+            string.IsNullOrWhiteSpace(p256dh) ||
+            string.IsNullOrWhiteSpace(auth))
+        {
+            throw new ArgumentException(
+                "Invalid push subscription.");
+        }
+
+
+        await using var db =
+            await factory.CreateDbContextAsync();
+
+
+        var roomExists =
+            await db.Rooms.AnyAsync(
+                x =>
+                    x.Code == roomCode);
+
+        if (!roomExists)
+        {
+            throw new InvalidOperationException(
+                "Room not found.");
+        }
+
+
+        var existing =
+            await db.PushSubscriptions
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.UserName == userName &&
+                        x.RoomCode == roomCode &&
+                        x.Endpoint == endpoint);
+
+
+        if (existing is null)
+        {
+            db.PushSubscriptions.Add(
+                new PushSubscription
+                {
+                    UserName =
+                        userName,
+
+                    RoomCode =
+                        roomCode,
+
+                    Endpoint =
+                        endpoint,
+
+                    P256dh =
+                        p256dh,
+
+                    Auth =
+                        auth,
+
+                    CreatedAt =
+                        DateTime.UtcNow
+                });
+        }
+        else
+        {
+            existing.P256dh =
+                p256dh;
+
+            existing.Auth =
+                auth;
+
+            existing.CreatedAt =
+                DateTime.UtcNow;
+        }
+
+
+        await db.SaveChangesAsync();
+    }
+
+
+    // ============================================================
+    // GET PUSH SUBSCRIPTIONS
+    // ============================================================
+
+    public async Task<List<PushSubscription>>
+        GetPushSubscriptionsAsync(
+            string roomCode,
+            string senderName)
+    {
+        roomCode =
+            roomCode.Trim()
+                .ToLowerInvariant();
+
+        senderName =
+            senderName.Trim();
+
+
+        await using var db =
+            await factory.CreateDbContextAsync();
+
+
+        var subscriptions =
+            await db.PushSubscriptions
+                .AsNoTracking()
+                .Where(
+                    x =>
+                        x.RoomCode == roomCode)
+                .ToListAsync();
+
+
+        return subscriptions
+            .Where(
+                x =>
+                    !x.UserName.Equals(
+                        senderName,
+                        StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
 
