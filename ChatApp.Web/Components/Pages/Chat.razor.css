@@ -5203,3 +5203,1097 @@ a:focus-visible {
             font-size: 17px;
         }
 }
+
+/* ================================================================
+   MOBILE-NATIVE CHAT UX
+   - Desktop layout remains unchanged.
+   - Phone gets a slide-in room information drawer.
+   - Header stays stable while typing.
+   - Composer respects safe areas and dynamic viewport changes.
+   ================================================================ */
+
+.mobile-info-button,
+.mobile-info-backdrop,
+.mobile-info-drawer {
+    display: none;
+}
+
+@media (max-width: 700px) {
+
+    .chat-shell,
+    .chat-page {
+        height: 100dvh;
+        min-height: 100dvh;
+        max-height: 100dvh;
+    }
+
+    .chat-layout {
+        height: calc(100dvh - 58px);
+        min-height: 0;
+    }
+
+    .conversation {
+        position: relative;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .conversation-header {
+        position: relative;
+        z-index: 30;
+        flex: 0 0 64px;
+        height: 64px;
+        min-height: 64px;
+        padding: 0 12px 0 14px;
+        gap: 8px;
+        background: rgba(9, 11, 17, .94);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+        .conversation-header > div:first-child {
+            flex: 1;
+            min-width: 0;
+        }
+
+    .conversation-title-row {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .conversation-header h3 {
+        font-size: 15px;
+        line-height: 1.15;
+        margin: 0 0 3px;
+    }
+
+    .room-private-pill {
+        flex: 0 0 auto;
+        padding: 3px 7px;
+        border-radius: 999px;
+        font-size: 7px;
+    }
+
+    .room-code-label {
+        display: block;
+        max-width: min(52vw, 220px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 8.5px;
+    }
+
+    .presence-summary {
+        flex: 0 0 auto;
+        max-width: 110px;
+        font-size: 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobile-info-button {
+        display: inline-grid;
+        place-items: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border: 1px solid rgba(255, 255, 255, .10);
+        border-radius: 12px;
+        background: rgba(255,255,255,.045);
+        color: #dbe5f8;
+        font-size: 20px;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition: background .18s ease, transform .18s ease, border-color .18s ease;
+    }
+
+        .mobile-info-button:active {
+            transform: scale(.95);
+            background: rgba(116, 157, 243, .12);
+            border-color: rgba(116, 157, 243, .25);
+        }
+
+    .messages {
+        min-height: 0;
+        flex: 1 1 auto;
+        padding: 12px 10px 8px;
+        gap: 0;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        scroll-padding-bottom: 12px;
+    }
+
+    .message-row {
+        margin-bottom: 10px;
+    }
+
+        .message-row .bubble {
+            max-width: 88%;
+            padding: 10px 12px 8px;
+            border-radius: 15px;
+        }
+
+    .message-text {
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .message-footer time,
+    .message-read,
+    .sent-text,
+    .seen-text {
+        font-size: 8.5px;
+    }
+
+    .typing {
+        flex: 0 0 auto;
+        min-height: 24px;
+        padding: 0 13px 5px;
+        font-size: 9px;
+    }
+
+    .composer {
+        flex: 0 0 auto;
+        position: relative;
+        z-index: 25;
+        gap: 7px;
+        padding: 7px 9px max(9px, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(8,10,15,.90), rgba(8,10,15,.995));
+        transform: translateZ(0);
+    }
+
+        .composer textarea {
+            min-height: 46px;
+            max-height: 105px;
+            padding: 12px 13px;
+            border-radius: 14px;
+            font-size: 16px;
+            line-height: 1.35;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+    .send {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+        border-radius: 14px;
+    }
+
+    /* -------------------------
+       MOBILE ROOM INFO DRAWER
+       ------------------------- */
+
+    .mobile-info-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, .54);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        animation: mobileInfoBackdropIn .18s ease-out;
+    }
+
+    .mobile-info-drawer {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: min(88vw, 380px);
+        height: 100%;
+        padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+        overflow-y: auto;
+        background: linear-gradient(180deg, #101522, #090c13 72%);
+        border-left: 1px solid rgba(255,255,255,.09);
+        box-shadow: -18px 0 50px rgba(0,0,0,.38);
+        animation: mobileInfoDrawerIn .22s cubic-bezier(.2,.8,.2,1);
+        overscroll-behavior: contain;
+    }
+
+    .mobile-info-drawer-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .mobile-info-eyebrow,
+    .mobile-info-section-title {
+        color: #64718a;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .mobile-info-drawer-header h3 {
+        margin: 5px 0 0;
+        color: #f4f7fb;
+        font-size: 22px;
+        line-height: 1.1;
+        letter-spacing: -.4px;
+    }
+
+    .mobile-info-close {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 12px;
+        background: rgba(255,255,255,.045);
+        color: #cad3e3;
+        font-size: 25px;
+        line-height: 1;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-info-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0;
+        padding: 13px;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 16px;
+        background: rgba(255,255,255,.035);
+    }
+
+    .mobile-info-avatar,
+    .mobile-info-member-avatar {
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #304875, #151c2e);
+        border: 1px solid rgba(124,164,255,.16);
+        color: #bfd3ff;
+        font-weight: 800;
+    }
+
+    .mobile-info-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+
+    .mobile-info-profile-text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .mobile-info-profile-text strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #f0f4fb;
+            font-size: 14px;
+        }
+
+        .mobile-info-profile-text span {
+            color: #758199;
+            font-size: 10px;
+        }
+
+    .mobile-info-section {
+        margin-top: 17px;
+    }
+
+    .mobile-info-room-code {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 10px 11px;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 12px;
+        background: rgba(255,255,255,.025);
+    }
+
+        .mobile-info-room-code > span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #c0caDC;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 11px;
+        }
+
+        .mobile-info-room-code button {
+            flex: 0 0 auto;
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 9px;
+            background: rgba(113,157,245,.12);
+            color: #8eb3ff;
+            font-size: 9px;
+            font-weight: 800;
+            touch-action: manipulation;
+        }
+
+    .mobile-info-status-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 9px;
+        color: #aeb8c8;
+        font-size: 11px;
+    }
+
+        .mobile-info-status-row .status-dot {
+            width: 7px;
+            height: 7px;
+        }
+
+    .mobile-info-members-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .mobile-info-member-count {
+        min-width: 22px;
+        height: 20px;
+        display: inline-grid;
+        place-items: center;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.05);
+        color: #8793a9;
+        font-size: 9px;
+        font-weight: 800;
+    }
+
+    .mobile-info-members {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        max-height: 240px;
+        overflow-y: auto;
+        padding-right: 2px;
+    }
+
+    .mobile-info-member {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 48px;
+        padding: 7px 8px;
+        border: 1px solid rgba(255,255,255,.045);
+        border-radius: 12px;
+        background: rgba(255,255,255,.022);
+    }
+
+    .mobile-info-member-avatar {
+        width: 31px;
+        height: 31px;
+        font-size: 10px;
+        border-radius: 10px;
+    }
+
+    .mobile-info-member-copy {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .mobile-info-member-name {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #d0d7e4;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+        .mobile-info-member-name small {
+            color: #6d7890;
+            font-size: 8px;
+            font-weight: 800;
+        }
+
+    .mobile-info-member-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+        .mobile-info-member-status i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4b5363;
+        }
+
+        .mobile-info-member-status.online {
+            color: #71d18d;
+        }
+
+            .mobile-info-member-status.online i {
+                background: #59c97a;
+                box-shadow: 0 0 8px rgba(89,201,122,.36);
+            }
+
+        .mobile-info-member-status.offline {
+            color: #6d7587;
+        }
+
+    .mobile-info-private-note {
+        display: flex;
+        gap: 10px;
+        margin-top: 17px;
+        padding: 12px;
+        border: 1px solid rgba(255,255,255,.06);
+        border-radius: 13px;
+        background: rgba(255,255,255,.025);
+    }
+
+        .mobile-info-private-note > span {
+            flex: 0 0 auto;
+            font-size: 16px;
+        }
+
+        .mobile-info-private-note strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #cfd7e5;
+            font-size: 10px;
+        }
+
+        .mobile-info-private-note p {
+            margin: 0;
+            color: #707c92;
+            font-size: 9px;
+            line-height: 1.45;
+        }
+
+    .mobile-info-leave {
+        width: 100%;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        margin-top: auto;
+        padding: 11px 13px;
+        border: 1px solid rgba(248,113,113,.15);
+        border-radius: 12px;
+        background: rgba(248,113,113,.07);
+        color: #f28b8b;
+        font-size: 11px;
+        font-weight: 800;
+        touch-action: manipulation;
+    }
+
+        .mobile-info-leave:disabled {
+            opacity: .55;
+        }
+}
+
+@keyframes mobileInfoBackdropIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes mobileInfoDrawerIn {
+    from {
+        opacity: .7;
+        transform: translateX(28px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 420px) {
+    .presence-summary {
+        max-width: 74px;
+    }
+
+    .room-code-label {
+        max-width: 44vw;
+    }
+
+    .mobile-info-drawer {
+        width: min(92vw, 360px);
+        padding-left: 13px;
+        padding-right: 13px;
+    }
+
+    .mobile-info-drawer-header h3 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 360px) {
+    .mobile-info-button {
+        flex-basis: 38px;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+    }
+
+    .conversation-header h3 {
+        font-size: 13px;
+    }
+
+    .room-code-label {
+        font-size: 8px;
+        max-width: 41vw;
+    }
+
+    .message-text {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 700px) and (orientation: landscape) {
+    .mobile-info-drawer {
+        width: min(76vw, 390px);
+    }
+
+    .mobile-info-members {
+        max-height: 130px;
+    }
+
+    .mobile-info-leave {
+        margin-top: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-info-backdrop,
+    .mobile-info-drawer {
+        animation: none !important;
+    }
+}
+
+
+
+/* ================================================================
+   FINAL MOBILE OVERRIDE — ChatApp
+   This block intentionally comes last so it wins over older
+   mobile rules in this stylesheet.
+   ================================================================ */
+
+@media (max-width: 700px) {
+
+    /* ---------- viewport / shell ---------- */
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    .chat-page,
+    .chat-shell {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .chat-layout {
+        width: 100%;
+        height: calc(100dvh - 58px);
+        min-height: 0;
+        display: block;
+    }
+
+    .side-panel {
+        display: none !important;
+    }
+
+    .conversation {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ---------- compact top bar ---------- */
+    .topbar {
+        flex: 0 0 58px;
+        height: 58px;
+        min-height: 58px;
+        padding: env(safe-area-inset-top) 10px 0;
+        gap: 8px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .top-actions {
+        min-width: 0;
+        gap: 6px;
+        margin-left: auto;
+    }
+
+        .top-actions .user-chip {
+            max-width: 90px;
+            min-width: 0;
+            padding-right: 7px;
+        }
+
+        .top-actions .user-chip-name {
+            max-width: 48px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 9px;
+        }
+
+        .top-actions .connection {
+            width: 7px;
+            min-width: 7px;
+            gap: 0;
+            overflow: hidden;
+            color: transparent;
+            font-size: 0;
+        }
+
+            .top-actions .connection i {
+                width: 7px;
+                height: 7px;
+                flex: 0 0 7px;
+            }
+
+        /* Keep notification available, but make it icon-only. */
+        .top-actions .notification-button {
+            width: 38px;
+            min-width: 38px;
+            height: 38px;
+            min-height: 38px;
+            padding: 0;
+            border-radius: 11px;
+            font-size: 0;
+            flex: 0 0 38px;
+        }
+
+            .top-actions .notification-button .share-icon {
+                font-size: 17px;
+                line-height: 1;
+            }
+
+        /* Copy + leave now live inside the mobile info drawer. */
+        .top-actions > .share-button:not(.notification-button),
+        .top-actions > .leave-button {
+            display: none !important;
+        }
+
+    /* ---------- stable chat header ---------- */
+    .conversation-header {
+        flex: 0 0 62px;
+        height: 62px;
+        min-height: 62px;
+        padding: 0 10px 0 13px;
+        gap: 8px;
+        position: relative;
+        z-index: 20;
+    }
+
+        .conversation-header > div:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+    .conversation-title-row {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .conversation-header h3 {
+        min-width: 0;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 15px;
+        line-height: 1.2;
+    }
+
+    .room-private-pill {
+        flex: 0 0 auto;
+        padding: 3px 7px;
+        font-size: 7px;
+    }
+
+    .room-code-label {
+        display: block;
+        max-width: 55vw;
+        margin-top: 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 8px;
+    }
+
+    .presence-summary {
+        flex: 0 0 auto;
+        max-width: 88px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 8px;
+    }
+
+    .mobile-info-button {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        padding: 0;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 11px;
+        background: rgba(255,255,255,.055);
+        color: #d8e2f4;
+        font-size: 19px;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+        .mobile-info-button:active {
+            transform: scale(.96);
+            background: rgba(121,169,255,.14);
+        }
+
+    /* ---------- messages: this is the only flexible area ---------- */
+    .messages {
+        flex: 1 1 auto;
+        width: 100%;
+        min-height: 0;
+        padding: 12px 9px 10px;
+        gap: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        scrollbar-width: none;
+    }
+
+        .messages::-webkit-scrollbar {
+            display: none;
+        }
+
+    .message-row {
+        width: 100%;
+        min-width: 0;
+        margin-bottom: 10px;
+    }
+
+        .message-row .bubble {
+            max-width: 87%;
+            min-width: 0;
+            padding: 10px 11px 7px;
+            border-radius: 14px;
+        }
+
+    .message-text {
+        max-width: 100%;
+        font-size: 13px;
+        line-height: 1.46;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .bubble > strong {
+        margin-bottom: 3px;
+        font-size: 9px;
+    }
+
+    .message-footer {
+        gap: 4px;
+        margin-top: 5px;
+        min-height: 11px;
+    }
+
+        .message-footer time,
+        .message-read,
+        .sent-text,
+        .seen-text {
+            font-size: 8px;
+        }
+
+    /* ---------- touch message actions ---------- */
+    .message-row .message-hover-actions {
+        max-width: 100%;
+        margin-top: 4px;
+        gap: 4px;
+    }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button,
+    .message-row .message-menu-button {
+        min-height: 34px;
+        height: 34px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .message-row .message-tool-button,
+    .message-row .reply-message-button {
+        padding-left: 9px;
+        padding-right: 9px;
+        font-size: 9px;
+    }
+
+    .message-row .message-menu-button {
+        width: 34px;
+        min-width: 34px;
+    }
+
+    /* ---------- typing indicator ---------- */
+    .typing {
+        flex: 0 0 auto;
+        min-height: 21px;
+        padding: 0 13px 5px;
+        font-size: 9px;
+    }
+
+    /* ---------- reply preview ---------- */
+    .reply-preview {
+        flex: 0 0 auto;
+        min-height: 52px;
+        margin: 0 8px 6px;
+        padding: 8px 9px;
+        border-radius: 11px;
+    }
+
+    /* ---------- composer: never becomes the scroll container ---------- */
+    .composer {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 62px;
+        align-items: flex-end;
+        gap: 7px;
+        padding: 8px 8px max(9px, calc(9px + env(safe-area-inset-bottom)));
+        border-top: 1px solid rgba(255,255,255,.07);
+        background: rgba(8,10,15,.985);
+        position: relative;
+        z-index: 30;
+    }
+
+        .composer textarea {
+            flex: 1 1 auto;
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            max-height: 96px;
+            padding: 11px 12px;
+            border-radius: 13px;
+            font-size: 14px;
+            line-height: 1.38;
+            overscroll-behavior: contain;
+        }
+
+    .send {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 13px;
+        font-size: 17px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ---------- toast above keyboard/composer ---------- */
+    .toast {
+        bottom: calc(76px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 26px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* ---------- info backdrop / drawer ---------- */
+    .mobile-info-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 200 !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: stretch !important;
+        background: rgba(0,0,0,.52) !important;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+
+    .mobile-info-drawer {
+        width: min(88vw, 360px) !important;
+        max-width: 360px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding: max(16px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom)) !important;
+        border-left: 1px solid rgba(255,255,255,.09);
+        border-radius: 18px 0 0 18px;
+        background: #0d111a !important;
+    }
+
+    .mobile-info-members {
+        max-height: 30vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ---------- small phones ---------- */
+@media (max-width: 420px) {
+    .top-actions .user-chip-name {
+        display: none !important;
+    }
+
+    .top-actions .user-chip {
+        width: 34px;
+        min-width: 34px;
+        padding: 3px;
+    }
+
+    .top-actions .user-chip-avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .presence-summary {
+        max-width: 70px;
+    }
+
+    .room-code-label {
+        max-width: 48vw;
+    }
+
+    .message-row .bubble {
+        max-width: 91%;
+    }
+}
+
+/* ---------- very small phones ---------- */
+@media (max-width: 360px) {
+    .conversation-header {
+        flex-basis: 58px;
+        height: 58px;
+        min-height: 58px;
+    }
+
+        .conversation-header h3 {
+            font-size: 14px;
+        }
+
+    .room-private-pill {
+        display: none;
+    }
+
+    .presence-summary {
+        display: none;
+    }
+
+    .mobile-info-button {
+        width: 37px !important;
+        min-width: 37px !important;
+        height: 37px !important;
+        flex-basis: 37px !important;
+    }
+
+    .messages {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+    .message-row .bubble {
+        max-width: 94%;
+    }
+
+    .composer {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+}
+
+/* ---------- landscape phones ---------- */
+@media (max-width: 700px) and (orientation: landscape) {
+    .topbar {
+        flex-basis: 50px;
+        height: 50px;
+        min-height: 50px;
+    }
+
+    .chat-layout {
+        height: calc(100dvh - 50px);
+    }
+
+    .conversation-header {
+        flex-basis: 50px;
+        height: 50px;
+        min-height: 50px;
+    }
+
+    .messages {
+        padding-top: 7px;
+        padding-bottom: 7px;
+    }
+
+    .composer {
+        min-height: 50px;
+        padding-top: 5px;
+    }
+
+        .composer textarea {
+            min-height: 40px;
+            max-height: 72px;
+        }
+
+    .send {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+}

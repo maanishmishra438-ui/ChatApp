@@ -419,6 +419,14 @@ else
 
                     </div>
 
+                    <button type="button"
+                            class="mobile-info-button"
+                            @onclick="OpenMobileInfo"
+                            aria-label="Open room information"
+                            title="Room info">
+                        <span>ⓘ</span>
+                    </button>
+
                 </div>
 
 
@@ -790,6 +798,116 @@ else
 
                 </footer>
 
+                @if (mobileInfoOpen)
+                {
+                    <div class="mobile-info-backdrop"
+                         @onclick="CloseMobileInfo">
+
+                        <aside class="mobile-info-drawer"
+                               @onclick:stopPropagation="true">
+
+                            <div class="mobile-info-drawer-header">
+                                <div>
+                                    <span class="mobile-info-eyebrow">ROOM INFORMATION</span>
+                                    <h3>Private chat</h3>
+                                </div>
+
+                                <button type="button"
+                                        class="mobile-info-close"
+                                        @onclick="CloseMobileInfo"
+                                        aria-label="Close room information">
+                                    ×
+                                </button>
+                            </div>
+
+                            <div class="mobile-info-profile">
+                                <div class="mobile-info-avatar">
+                                    @Initial
+                                </div>
+
+                                <div class="mobile-info-profile-text">
+                                    <strong>@name</strong>
+                                    <span>Current participant</span>
+                                </div>
+                            </div>
+
+                            <div class="mobile-info-section">
+                                <span class="mobile-info-section-title">ROOM CODE</span>
+                                <div class="mobile-info-room-code">
+                                    <span>@RoomCode</span>
+                                    <button type="button"
+                                            @onclick="CopyInvite"
+                                            aria-label="Copy invite link">
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mobile-info-section">
+                                <span class="mobile-info-section-title">CONNECTION</span>
+                                <div class="mobile-info-status-row">
+                                    <span class="status-dot @(connected ? "online" : "offline")"></span>
+                                    <span>@(connected ? "Connected" : "Connecting…")</span>
+                                </div>
+                            </div>
+
+                            <div class="mobile-info-section">
+                                <div class="mobile-info-members-heading">
+                                    <span class="mobile-info-section-title">ROOM MEMBERS</span>
+                                    <span class="mobile-info-member-count">@knownParticipants.Count</span>
+                                </div>
+
+                                <div class="mobile-info-members">
+                                    @foreach (var participant in ParticipantNames)
+                                    {
+                                        var participantOnline =
+                                        IsUserOnline(participant);
+
+                                        <div class="mobile-info-member">
+                                            <div class="mobile-info-member-avatar">
+                                                @(participant.Trim()[0].ToString().ToUpperInvariant())
+                                            </div>
+
+                                            <div class="mobile-info-member-copy">
+                                                <span class="mobile-info-member-name">
+                                                    @participant
+                                                    @if (participant.Equals(
+                                                                                            name,
+                                                                                            StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <small>You</small>
+                                                    }
+                                                </span>
+                                                <span class="mobile-info-member-status @(participantOnline ? "online" : "offline")">
+                                                    <i></i>
+                                                    @(participantOnline ? "Online" : "Offline")
+                                                </span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mobile-info-private-note">
+                                <span>🔒</span>
+                                <div>
+                                    <strong>Private conversation</strong>
+                                    <p>Anyone with this room link can enter the conversation.</p>
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                    class="mobile-info-leave"
+                                    @onclick="OpenLeaveModal"
+                                    disabled="@isLeaving">
+                                <span>↪</span>
+                                Leave this room
+                            </button>
+
+                        </aside>
+                    </div>
+                }
+
             </section>
 
         </main>
@@ -885,7 +1003,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-             selectedMessage is not null)
+                     selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1134,6 +1252,8 @@ else
     private bool showLeaveModal;
 
     private bool isLeaving;
+
+    private bool mobileInfoOpen;
 
 
     // ============================================================
@@ -2183,6 +2303,22 @@ else
     {
         openMenuMessageId = null;
         reactionPickerMessageId = null;
+    }
+
+
+    // ============================================================
+    // MOBILE ROOM INFO
+    // ============================================================
+
+    private void OpenMobileInfo()
+    {
+        mobileInfoOpen = true;
+        CloseFloatingActions();
+    }
+
+    private void CloseMobileInfo()
+    {
+        mobileInfoOpen = false;
     }
 
 
