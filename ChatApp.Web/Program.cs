@@ -19,7 +19,6 @@ builder.Services
 
 builder.Services.AddSignalR();
 
-
 builder.Services.AddDbContextFactory<ChatDbContext>(
     options =>
         options.UseNpgsql(
@@ -27,7 +26,6 @@ builder.Services.AddDbContextFactory<ChatDbContext>(
                 .GetConnectionString("ChatDb")
             ?? throw new InvalidOperationException(
                 "Connection string 'ChatDb' was not found.")));
-
 
 builder.Services.AddScoped<ChatService>();
 
@@ -64,6 +62,25 @@ builder.Services.Configure<ForwardedHeadersOptions>(
 
 var app =
     builder.Build();
+
+
+// ================================================================
+// DATABASE MIGRATIONS
+// APPLY PENDING EF CORE MIGRATIONS ON STARTUP
+// ================================================================
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbFactory =
+        scope.ServiceProvider
+            .GetRequiredService<
+                IDbContextFactory<ChatDbContext>>();
+
+    await using var db =
+        await dbFactory.CreateDbContextAsync();
+
+    await db.Database.MigrateAsync();
+}
 
 
 // ================================================================

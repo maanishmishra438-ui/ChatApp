@@ -35,6 +35,7 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -127,22 +128,22 @@ $tf/
 # Guidance Automation Toolkit
 *.gpState
 
-# ReSharper is a .NET coding add-in
+# ReSharper
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
 
-# TeamCity is a build add-in
+# TeamCity
 _TeamCity*
 
-# DotCover is a Code Coverage Tool
+# DotCover
 *.dotCover
 
-# AxoCover is a Code Coverage Tool
+# AxoCover
 .axoCover/*
 !.axoCover/settings.json
 
-# Coverlet is a free, cross platform Code Coverage Tool
+# Coverlet
 coverage*.json
 coverage*.xml
 coverage*.info
@@ -163,10 +164,10 @@ AutoTest.Net/
 # Web workbench (sass)
 .sass-cache/
 
-# Installshield output folder
+# Installshield output
 [Ee]xpress/
 
-# DocProject is a documentation generator add-in
+# DocProject output
 DocProject/buildhelp/
 DocProject/Help/*.HxT
 DocProject/Help/*.HxC
@@ -176,90 +177,33 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
-# Click-Once directory
-publish/
-
-# Publish Web Output
+# Click-Once
 *.[Pp]ublish.xml
 *.azurePubxml
-# Note: Comment the next line if you want to checkin your web deploy settings,
-# but database connection strings (with potential passwords) will be unencrypted
-*.pubxml
 *.publishproj
 
-# Microsoft Azure Web App publish settings. Comment the next line if you want to
-# checkin your Azure Web App publish settings, but sensitive information contained
-# in these scripts will be unencrypted
+# Microsoft Azure publish settings
 PublishScripts/
 
 # NuGet Packages
 *.nupkg
-# NuGet Symbol Packages
 *.snupkg
-# The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
-# except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
-# Uncomment if necessary however generally it will be regenerated when needed
-#!**/[Pp]ackages/repositories.config
-# NuGet v3's project.json files produces more ignorable files
+
+# NuGet v3
 *.nuget.props
 *.nuget.targets
 
-# Microsoft Azure Build Output
+# Microsoft Azure Emulator
 csx/
 *.build.csdef
 
-# Microsoft Azure Emulator
-ecf/
-rcf/
-
-# Windows Store app package directories and files
+# Windows Store app package directories
 AppPackages/
 BundleArtifacts/
 Package.StoreAssociation.xml
 _pkginfo.txt
-*.appx
-*.appxbundle
-*.appxupload
-
-# Visual Studio cache files
-# files ending in .cache can be ignored
-*.[Cc]ache
-# but keep track of directories ending in .cache
-!?*.[Cc]ache/
-
-# Others
-ClientBin/
-~$*
-*~
-*.dbmdl
-*.dbproj.schemaview
-*.jfm
-*.pfx
-*.publishsettings
-orleans.codegen.cs
-
-# Including strong name files can present a security risk
-# (https://github.com/github/gitignore/pull/2483#issue-259490424)
-#*.snk
-
-# Since there are multiple workflows, uncomment next line to ignore bower_components
-# (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
-#bower_components/
-
-# RIA/Silverlight projects
-Generated_Code/
-
-# Backup & report files from converting an old project file
-# to a newer Visual Studio version. Backup files are not needed,
-# because we have git ;-)
-_UpgradeReport_Files/
-Backup*/
-UpgradeLog*.XML
-UpgradeLog*.htm
-ServiceFabricBackup/
-*.rptproj.bak
 
 # SQL Server files
 *.mdf
@@ -278,23 +222,19 @@ ServiceFabricBackup/
 # Microsoft Fakes
 FakesAssemblies/
 
-# GhostDoc plugin setting file
+# GhostDoc
 *.GhostDoc.xml
 
-# Node.js Tools for Visual Studio
+# Node.js
 .ntvs_analysis.dat
 node_modules/
 
-# Visual Studio 6 build log
+# Visual Studio 6
 *.plg
-
-# Visual Studio 6 workspace options file
 *.opt
-
-# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
 *.vbw
 
-# Visual Studio LightSwitch build output
+# Visual Studio LightSwitch
 **/*.HTMLClient/GeneratedArtifacts
 **/*.DesktopClient/GeneratedArtifacts
 **/*.DesktopClient/ModelManifest.xml
@@ -302,62 +242,57 @@ node_modules/
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
 
-# Paket dependency manager
+# Paket
 .paket/paket.exe
 paket-files/
 
-# FAKE - F# Make
-.fake/
-
-# CodeRush personal settings
-.cr/personal
-
-# Python Tools for Visual Studio (PTVS)
-__pycache__/
-*.pyc
-
-# Cake - Uncomment if you are using it
+# FAKE
 # tools/**
 # !tools/packages.config
 
 # Tabs Studio
 *.tss
 
-# Telerik's JustMock configuration file
+# Telerik JustMock
 *.jmconfig
 
-# BizTalk build output
+# BizTalk
 *.btp.cs
 *.btm.cs
 *.odx.cs
 *.xsd.cs
 
-# OpenCover UI analysis results
+# OpenCover
 OpenCover/
 
-# Azure Stream Analytics local run output
+# Azure Stream Analytics
 ASALocalRun/
 
 # MSBuild Binary and Structured Log
 *.binlog
 
-# NVidia Nsight GPU debugger configuration file
+# NVidia Nsight
 *.nvuser
 
-# MFractors (Xamarin productivity tool) working folder
+# MFractors
 .mfractor/
 
-# Local History for Visual Studio
+# Local History
 .localhistory/
 
-# BeatPulse healthcheck temp database
+# BeatPulse
 healthchecksdb
 
-# Backup folder for Package Reference Convert tool in Visual Studio 2017
+# MigrationBackup
 MigrationBackup/
 
-# Ionide (cross platform F# VS Code tools) working folder
+# Ionide
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
+# ================================================================
+# CHATAPP DATABASE BACKUP / RESTORE FILES
+# ================================================================
+
+*.backup
+chatapp_data.list
+chatapp_data_restore.list
