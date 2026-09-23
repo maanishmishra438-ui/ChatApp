@@ -17,7 +17,16 @@ builder.Services
     .AddInteractiveServerComponents();
 
 
+// ================================================================
+// SIGNALR
+// ================================================================
+
 builder.Services.AddSignalR();
+
+
+// ================================================================
+// DATABASE
+// ================================================================
 
 builder.Services.AddDbContextFactory<ChatDbContext>(
     options =>
@@ -31,16 +40,29 @@ builder.Services.AddScoped<ChatService>();
 
 
 // ================================================================
-// PUSH NOTIFICATION SERVICE
+// PUSH NOTIFICATION
 // ================================================================
 
+// Service that actually sends Web Push notifications.
 builder.Services.AddScoped<
     PushNotificationService>();
 
 
+// Queue must be Singleton because it is shared between
+// SignalR requests and the background worker.
+builder.Services.AddSingleton<
+    PushNotificationQueue>();
+
+
+// Background worker continuously reads the queue and
+// sends notifications without blocking ChatHub.
+builder.Services.AddHostedService<
+    PushNotificationWorker>();
+
+
 // ================================================================
 // FORWARDED HEADERS
-// IMPORTANT FOR NGROK / REVERSE PROXY
+// IMPORTANT FOR RENDER / REVERSE PROXY / HTTPS
 // ================================================================
 
 builder.Services.Configure<ForwardedHeadersOptions>(
@@ -66,7 +88,6 @@ var app =
 
 // ================================================================
 // DATABASE MIGRATIONS
-// APPLY PENDING EF CORE MIGRATIONS ON STARTUP
 // ================================================================
 
 using (var scope = app.Services.CreateScope())

@@ -5,7 +5,7 @@ namespace ChatApp.Web.Hubs;
 
 public sealed class ChatHub(
     ChatService chatService,
-    PushNotificationService pushNotificationService) : Hub
+    PushNotificationQueue pushNotificationQueue) : Hub
 {
     // ============================================================
     // PRESENCE STATE
@@ -249,14 +249,17 @@ public sealed class ChatHub(
         // --------------------------------------------------------
         // WEB PUSH NOTIFICATION
         // --------------------------------------------------------
+        // Queue the notification instead of waiting for the
+        // external push provider. This keeps chat response fast.
+        // --------------------------------------------------------
 
         try
         {
-            await pushNotificationService
-                .SendNewMessageNotificationAsync(
+            await pushNotificationQueue.EnqueueAsync(
+                new PushNotificationJob(
                     roomCode,
                     sender,
-                    message);
+                    message));
         }
         catch
         {

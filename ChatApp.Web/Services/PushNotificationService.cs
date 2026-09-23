@@ -2,12 +2,14 @@
 using ChatApp.Web.Data;
 using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
+using Microsoft.Extensions.Logging;
 
 namespace ChatApp.Web.Services;
 
 public sealed class PushNotificationService(
     IConfiguration configuration,
-    ChatService chatService)
+    ChatService chatService,
+    ILogger<PushNotificationService> logger)
 {
     // ============================================================
     // VAPID CONFIGURATION
@@ -31,11 +33,9 @@ public sealed class PushNotificationService(
 
     // ============================================================
     // PUBLIC VAPID KEY
-    // USED BY BROWSER
     // ============================================================
 
-    public string PublicKey =>
-        publicKey;
+    public string PublicKey => publicKey;
 
 
     // ============================================================
@@ -47,6 +47,23 @@ public sealed class PushNotificationService(
         string sender,
         ChatMessage message)
     {
+        if (string.IsNullOrWhiteSpace(roomCode))
+        {
+            logger.LogWarning(
+                "Push notification skipped: room code is empty.");
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(sender))
+        {
+            logger.LogWarning(
+                "Push notification skipped: sender is empty.");
+
+            return;
+        }
+
+
         // --------------------------------------------------------
         // GET SUBSCRIBED DEVICES
         // EXCLUDE THE SENDER
@@ -60,20 +77,75 @@ public sealed class PushNotificationService(
 
         if (subscriptions.Count == 0)
         {
+            logger.LogDebug(
+                "No push subscriptions found for room {RoomCode}.",
+                roomCode);
+
             return;
         }
 
 
         // --------------------------------------------------------
-        // CREATE PUSH CLIENT
+        // CREATE PAYLOAD ONCE
         // --------------------------------------------------------
 
-        var pushClient =
-            new PushServiceClient();
+        var payload =
+            JsonSerializer.Serialize(
+                new
+                {
+                    title =
+                        $"💬 {sender}",
+
+                    body =
+                        string.IsNullOrWhiteSpace(message.Text)
+                            ? "New message"
+                            : message.Text,
+
+                    data =
+                        new
+                        {
+                            roomCode,
+
+                            messageId =
+                                message.Id,
+
+                            userName =
+                                sender
+                        },
+
+                    actions =
+                        new[]
+                        {
+                            new
+                            {
+                                action = "open",
+                                title = "Open chat"
+                            },
+
+                            new
+                            {
+                                action = "like",
+                                title = "❤️ Like"
+                            }
+                        }
+                });
 
 
         // --------------------------------------------------------
-        // CREATE VAPID AUTHENTICATION
+        // CREATE PUSH MESSAGE ONCE
+        // --------------------------------------------------------
+
+        var pushMessage =
+            new PushMessage(payload)
+            {
+                // Message remains valid for 5 minutes.
+                // This is NOT a delivery delay.
+                TimeToLive = 300
+            };
+
+
+        // --------------------------------------------------------
+        // CREATE VAPID AUTHENTICATION ONCE
         // --------------------------------------------------------
 
         using var vapidAuthentication =
@@ -86,122 +158,114 @@ public sealed class PushNotificationService(
 
 
         // --------------------------------------------------------
-        // SEND TO EVERY SUBSCRIBED DEVICE
+        // SEND TO ALL DEVICES IN PARALLEL
         // --------------------------------------------------------
 
-        foreach (var subscription in subscriptions)
-        {
-            try
-            {
-                // =================================================
-                // NOTIFICATION PAYLOAD
-                // =================================================
-
-                var payload =
-                    JsonSerializer.Serialize(
-                        new
-                        {
-                            title =
-                                $"💬 {sender}",
-
-                            body =
-                                string.IsNullOrWhiteSpace(
-                                    message.Text)
-                                    ? "New message"
-                                    : message.Text,
-
-                            data =
-                                new
-                                {
-                                    roomCode =
-                                        roomCode,
-
-                                    messageId =
-                                        message.Id,
-
-                                    userName =
-                                        sender
-                                },
-
-                            actions =
-                                new[]
-                                {
-                                    new
-                                    {
-                                        action =
-                                            "open",
-
-                                        title =
-                                            "Open chat"
-                                    },
-
-                                    new
-                                    {
-                                        action =
-                                            "like",
-
-                                        title =
-                                            "❤️ Like"
-                                    }
-                                }
-                        });
+        var pushClient =
+            new PushServiceClient();
 
 
-                // =================================================
-                // PUSH MESSAGE
-                // =================================================
-
-                var pushMessage =
-                    new PushMessage(payload)
-                    {
-                        TimeToLive = 300
-                    };
-
-
-                // =================================================
-                // BROWSER PUSH SUBSCRIPTION
-                // =================================================
-
-                var webPushSubscription =
-                    new Lib.Net.Http.WebPush.PushSubscription
-                    {
-                        Endpoint =
-                            subscription.Endpoint
-                    };
-
-
-                // Browser encryption keys.
-                webPushSubscription.Keys =
-                    new Dictionary<string, string>
-                    {
-                        ["p256dh"] =
-                            subscription.P256dh,
-
-                        ["auth"] =
-                            subscription.Auth
-                    };
-
-
-                // =================================================
-                // DELIVER PUSH
-                // =================================================
-
-                await pushClient
-                    .RequestPushMessageDeliveryAsync(
-                        webPushSubscription,
+        var pushTasks =
+            subscriptions.Select(
+                subscription =>
+                    SendToSubscriptionAsync(
+                        pushClient,
+                        subscription,
                         pushMessage,
-                        vapidAuthentication);
-            }
-            catch (PushServiceClientException)
+                        vapidAuthentication,
+                        roomCode))
+            .ToArray();
+
+
+        await Task.WhenAll(pushTasks);
+
+
+        logger.LogDebug(
+            "Push notification processing completed for room {RoomCode}. Devices: {Count}",
+            roomCode,
+            subscriptions.Count);
+    }
+
+
+    // ============================================================
+    // SEND TO ONE SUBSCRIPTION
+    // ============================================================
+
+    private async Task SendToSubscriptionAsync(
+        PushServiceClient pushClient,
+        dynamic subscription,
+        PushMessage pushMessage,
+        VapidAuthentication vapidAuthentication,
+        string roomCode)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(
+                    subscription.Endpoint))
             {
-                // Individual push failure should not
-                // break normal chat messaging.
+                logger.LogWarning(
+                    "Skipping push subscription with empty endpoint for room {RoomCode}.",
+                    roomCode);
+
+                return;
             }
-            catch
-            {
-                // Keep chat working even if one
-                // push subscription is invalid.
-            }
+
+
+            // ----------------------------------------------------
+            // CREATE BROWSER PUSH SUBSCRIPTION
+            // ----------------------------------------------------
+
+            var webPushSubscription =
+                new Lib.Net.Http.WebPush.PushSubscription
+                {
+                    Endpoint =
+                        subscription.Endpoint
+                };
+
+
+            // ----------------------------------------------------
+            // BROWSER ENCRYPTION KEYS
+            // ----------------------------------------------------
+
+            webPushSubscription.Keys =
+                new Dictionary<string, string>
+                {
+                    ["p256dh"] =
+                        subscription.P256dh,
+
+                    ["auth"] =
+                        subscription.Auth
+                };
+
+
+            // ----------------------------------------------------
+            // DELIVER PUSH
+            // ----------------------------------------------------
+
+            await pushClient
+                .RequestPushMessageDeliveryAsync(
+                    webPushSubscription,
+                    pushMessage,
+                    vapidAuthentication);
+
+
+            logger.LogDebug(
+                "Push notification sent successfully for room {RoomCode}.",
+                roomCode);
+        }
+        catch (PushServiceClientException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Push provider rejected delivery for room {RoomCode}.",
+                roomCode);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Unexpected push notification error for room {RoomCode}.",
+                roomCode);
         }
     }
 }
