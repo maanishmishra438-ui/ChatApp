@@ -13,7 +13,7 @@
 
 <PageTitle>Private Chat</PageTitle>
 
-@if (!hasJoined)
+@if (!isInitializing && !hasJoined)
 {
     <div class="join-screen">
 
@@ -1250,6 +1250,10 @@ else
 
     private string? typingUser;
 
+    // Prevents the Join screen from flashing while the page is
+    // checking the room and restoring the creator's ?name= session.
+    private bool isInitializing = true;
+
     private bool hasJoined;
 
     private bool isJoining;
@@ -1496,6 +1500,13 @@ else
 
             joinError =
                 ex.Message;
+        }
+        finally
+        {
+            // Only reveal either the Join screen or the actual chat
+            // after initialization has finished. This removes the
+            // short Join Private Chat flash after room creation.
+            isInitializing = false;
         }
     }
 
