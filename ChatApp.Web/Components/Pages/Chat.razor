@@ -424,7 +424,9 @@ else
                             @onclick="OpenMobileInfo"
                             aria-label="Open room information"
                             title="Room info">
+
                         <span>ⓘ</span>
+
                     </button>
 
                 </div>
@@ -798,6 +800,8 @@ else
 
                 </footer>
 
+
+                <!-- MOBILE INFO -->
                 @if (mobileInfoOpen)
                 {
                     <div class="mobile-info-backdrop"
@@ -807,104 +811,199 @@ else
                                @onclick:stopPropagation="true">
 
                             <div class="mobile-info-drawer-header">
+
                                 <div>
-                                    <span class="mobile-info-eyebrow">ROOM INFORMATION</span>
-                                    <h3>Private chat</h3>
+
+                                    <span class="mobile-info-eyebrow">
+                                        ROOM INFORMATION
+                                    </span>
+
+                                    <h3>
+                                        Private chat
+                                    </h3>
+
                                 </div>
 
                                 <button type="button"
                                         class="mobile-info-close"
                                         @onclick="CloseMobileInfo"
                                         aria-label="Close room information">
+
                                     ×
+
                                 </button>
+
                             </div>
 
+
                             <div class="mobile-info-profile">
+
                                 <div class="mobile-info-avatar">
                                     @Initial
                                 </div>
 
                                 <div class="mobile-info-profile-text">
-                                    <strong>@name</strong>
-                                    <span>Current participant</span>
+
+                                    <strong>
+                                        @name
+                                    </strong>
+
+                                    <span>
+                                        Current participant
+                                    </span>
+
                                 </div>
+
                             </div>
 
+
                             <div class="mobile-info-section">
-                                <span class="mobile-info-section-title">ROOM CODE</span>
+
+                                <span class="mobile-info-section-title">
+                                    ROOM CODE
+                                </span>
+
                                 <div class="mobile-info-room-code">
-                                    <span>@RoomCode</span>
+
+                                    <span>
+                                        @RoomCode
+                                    </span>
+
                                     <button type="button"
                                             @onclick="CopyInvite"
                                             aria-label="Copy invite link">
+
                                         Copy
+
                                     </button>
+
                                 </div>
+
                             </div>
 
+
                             <div class="mobile-info-section">
-                                <span class="mobile-info-section-title">CONNECTION</span>
+
+                                <span class="mobile-info-section-title">
+                                    CONNECTION
+                                </span>
+
                                 <div class="mobile-info-status-row">
+
                                     <span class="status-dot @(connected ? "online" : "offline")"></span>
-                                    <span>@(connected ? "Connected" : "Connecting…")</span>
+
+                                    <span>
+                                        @(connected
+                                                                        ? "Connected"
+                                                                        : "Connecting…")
+                            </span>
+
                                 </div>
+
                             </div>
 
+
                             <div class="mobile-info-section">
+
                                 <div class="mobile-info-members-heading">
-                                    <span class="mobile-info-section-title">ROOM MEMBERS</span>
-                                    <span class="mobile-info-member-count">@knownParticipants.Count</span>
+
+                                    <span class="mobile-info-section-title">
+                                        ROOM MEMBERS
+                                    </span>
+
+                                    <span class="mobile-info-member-count">
+                                        @knownParticipants.Count
+                                    </span>
+
                                 </div>
+
 
                                 <div class="mobile-info-members">
-                                    @foreach (var participant in ParticipantNames)
+
+                            @foreach (var participant in ParticipantNames)
                                     {
                                         var participantOnline =
                                         IsUserOnline(participant);
 
                                         <div class="mobile-info-member">
+
                                             <div class="mobile-info-member-avatar">
                                                 @(participant.Trim()[0].ToString().ToUpperInvariant())
                                             </div>
 
                                             <div class="mobile-info-member-copy">
+
                                                 <span class="mobile-info-member-name">
+
                                                     @participant
+
                                                     @if (participant.Equals(
                                                                                             name,
                                                                                             StringComparison.OrdinalIgnoreCase))
                                                     {
-                                                        <small>You</small>
+                                                        <small>
+                                                            You
+                                                        </small>
                                                     }
-                                                </span>
-                                                <span class="mobile-info-member-status @(participantOnline ? "online" : "offline")">
-                                                    <i></i>
-                                                    @(participantOnline ? "Online" : "Offline")
-                                                </span>
+
+                                    </span>
+
+                                    <span class="mobile-info-member-status @(participantOnline ? "online" : "offline")">
+
+                                        <i></i>
+
+                                        @(participantOnline
+                                                                                ? "Online"
+                                                                                : "Offline")
+
+                                    </span>
+
                                             </div>
+
                                         </div>
-                                    }
+                                                        }
+
                                 </div>
+
                             </div>
 
+
                             <div class="mobile-info-private-note">
-                                <span>🔒</span>
+
+                                <span>
+                                    🔒
+                                </span>
+
                                 <div>
-                                    <strong>Private conversation</strong>
-                                    <p>Anyone with this room link can enter the conversation.</p>
+
+                                    <strong>
+                                        Private conversation
+                                    </strong>
+
+                                    <p>
+                                        Anyone with this room link can enter the conversation.
+                                    </p>
+
                                 </div>
+
                             </div>
+
 
                             <button type="button"
                                     class="mobile-info-leave"
                                     @onclick="OpenLeaveModal"
                                     disabled="@isLeaving">
-                                <span>↪</span>
+
+                                <span>
+                                    ↪
+                                </span>
+
                                 Leave this room
+
                             </button>
 
                         </aside>
+
                     </div>
                 }
 
@@ -922,6 +1021,7 @@ else
             @toastMessage
         </div>
     }
+
 
     <!-- NOTIFICATION ERROR -->
     @if (!string.IsNullOrWhiteSpace(notificationError))
@@ -1003,7 +1103,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                     selectedMessage is not null)
+             selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1015,11 +1115,15 @@ else
 
                     @if (deleteMode == DeleteMode.Unsend)
                     {
-                        <span>↶</span>
+                        <span>
+                            ↶
+                        </span>
                     }
                     else
                     {
-                        <span>◯</span>
+                        <span>
+                            ◯
+                        </span>
                     }
 
                 </div>
@@ -1174,14 +1278,26 @@ else
     private readonly HashSet<string> knownParticipants =
         new(StringComparer.OrdinalIgnoreCase);
 
-    // Offline participants are kept briefly so a short network hiccup
-    // does not immediately remove them. If they stay offline for this
-    // duration, they are removed from the visible member list.
+
+    // ============================================================
+    // OFFLINE PARTICIPANT CLEANUP
+    // ============================================================
+
     private static readonly TimeSpan OfflineRemovalDelay =
         TimeSpan.FromMinutes(2);
 
-    private readonly Dictionary<string, CancellationTokenSource> offlineRemovalTimers =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, CancellationTokenSource>
+        offlineRemovalTimers =
+            new(StringComparer.OrdinalIgnoreCase);
+
+
+    // ============================================================
+    // PRESENCE HEARTBEAT
+    // ============================================================
+
+    private CancellationTokenSource? presenceHeartbeatCts;
+
+    private PeriodicTimer? presenceHeartbeatTimer;
 
 
     // ============================================================
@@ -1205,7 +1321,8 @@ else
 
     private bool isDeleting;
 
-    private DeleteMode deleteMode = DeleteMode.DeleteForMe;
+    private DeleteMode deleteMode =
+        DeleteMode.DeleteForMe;
 
 
     // ============================================================
@@ -1250,8 +1367,6 @@ else
 
     private string? typingUser;
 
-    // Prevents the Join screen from flashing while the page is
-    // checking the room and restoring the creator's ?name= session.
     private bool isInitializing = true;
 
     private bool hasJoined;
@@ -1289,8 +1404,10 @@ else
             if (string.IsNullOrWhiteSpace(origin))
             {
                 origin =
-                    Navigation.ToAbsoluteUri("/")
-                        .GetLeftPart(UriPartial.Authority);
+                    Navigation
+                        .ToAbsoluteUri("/")
+                        .GetLeftPart(
+                            UriPartial.Authority);
             }
 
             return
@@ -1331,7 +1448,8 @@ else
                 StringComparer.OrdinalIgnoreCase);
 
 
-    private bool IsUserOnline(string userName)
+    private bool IsUserOnline(
+        string userName)
     {
         return onlineUsers.Contains(userName);
     }
@@ -1341,9 +1459,12 @@ else
     // OFFLINE PARTICIPANT CLEANUP
     // ============================================================
 
-    private void CancelOfflineRemoval(string userName)
+    private void CancelOfflineRemoval(
+        string userName)
     {
-        if (offlineRemovalTimers.TryGetValue(userName, out var cts))
+        if (offlineRemovalTimers.TryGetValue(
+                userName,
+                out var cts))
         {
             offlineRemovalTimers.Remove(userName);
 
@@ -1359,16 +1480,21 @@ else
     }
 
 
-    private void ScheduleOfflineRemoval(string userName)
+    private void ScheduleOfflineRemoval(
+        string userName)
     {
         CancelOfflineRemoval(userName);
 
-        var cts = new CancellationTokenSource();
-        offlineRemovalTimers[userName] = cts;
+        var cts =
+            new CancellationTokenSource();
 
-        _ = RemoveOfflineParticipantLaterAsync(
-            userName,
-            cts);
+        offlineRemovalTimers[userName] =
+            cts;
+
+        _ =
+            RemoveOfflineParticipantLaterAsync(
+                userName,
+                cts);
     }
 
 
@@ -1384,31 +1510,34 @@ else
 
             await InvokeAsync(() =>
             {
-                // If the user came back online, keep them in the list.
                 if (onlineUsers.Contains(userName))
                 {
                     return;
                 }
 
                 knownParticipants.Remove(userName);
-                offlineRemovalTimers.Remove(userName);
+
+                offlineRemovalTimers.Remove(
+                    userName);
+
                 StateHasChanged();
             });
         }
         catch (OperationCanceledException)
         {
-            // User reconnected before the cleanup delay expired.
         }
         catch
         {
-            // Cleanup must never break the chat page.
         }
         finally
         {
-            if (offlineRemovalTimers.TryGetValue(userName, out var current) &&
+            if (offlineRemovalTimers.TryGetValue(
+                    userName,
+                    out var current) &&
                 ReferenceEquals(current, cts))
             {
-                offlineRemovalTimers.Remove(userName);
+                offlineRemovalTimers.Remove(
+                    userName);
             }
 
             try
@@ -1478,7 +1607,8 @@ else
                         existingName[..40];
                 }
 
-                if (!string.IsNullOrWhiteSpace(existingName))
+                if (!string.IsNullOrWhiteSpace(
+                        existingName))
                 {
                     name =
                         existingName;
@@ -1503,9 +1633,6 @@ else
         }
         finally
         {
-            // Only reveal either the Join screen or the actual chat
-            // after initialization has finished. This removes the
-            // short Join Private Chat flash after room creation.
             isInitializing = false;
         }
     }
@@ -1523,7 +1650,8 @@ else
         var enteredName =
             joinName.Trim();
 
-        if (string.IsNullOrWhiteSpace(enteredName))
+        if (string.IsNullOrWhiteSpace(
+                enteredName))
         {
             joinError =
                 "Please enter your name.";
@@ -1644,9 +1772,11 @@ else
 
         foreach (var message in messages)
         {
-            if (!string.IsNullOrWhiteSpace(message.Sender))
+            if (!string.IsNullOrWhiteSpace(
+                    message.Sender))
             {
-                knownParticipants.Add(message.Sender);
+                knownParticipants.Add(
+                    message.Sender);
             }
         }
 
@@ -1731,8 +1861,6 @@ else
                     StateHasChanged();
                 });
 
-
-                // Receiver confirms delivery.
                 if (!string.Equals(
                         message.Sender,
                         name,
@@ -1803,7 +1931,13 @@ else
             {
                 await InvokeAsync(() =>
                 {
-                    onlineUsers.Clear();
+                    // ------------------------------------------------
+                    // Build a clean snapshot of currently online users.
+                    // ------------------------------------------------
+
+                    var snapshotUsers =
+                        new HashSet<string>(
+                            StringComparer.OrdinalIgnoreCase);
 
                     foreach (var user in users)
                     {
@@ -1812,8 +1946,63 @@ else
                             continue;
                         }
 
-                        onlineUsers.Add(user);
-                        knownParticipants.Add(user);
+                        var normalizedUser =
+                            user.Trim();
+
+                        snapshotUsers.Add(
+                            normalizedUser);
+
+                        // User is online.
+                        onlineUsers.Add(
+                            normalizedUser);
+
+                        // Keep user in room member list.
+                        knownParticipants.Add(
+                            normalizedUser);
+
+                        // Cancel any pending removal.
+                        CancelOfflineRemoval(
+                            normalizedUser);
+                    }
+
+
+                    // ------------------------------------------------
+                    // Users missing from the latest snapshot are no
+                    // longer online.
+                    // ------------------------------------------------
+
+                    foreach (
+                        var previousOnlineUser
+                        in onlineUsers.ToList())
+                    {
+                        if (!snapshotUsers.Contains(
+                                previousOnlineUser))
+                        {
+                            onlineUsers.Remove(
+                                previousOnlineUser);
+
+                            ScheduleOfflineRemoval(
+                                previousOnlineUser);
+                        }
+                    }
+
+
+                    // ------------------------------------------------
+                    // Current user should stay online while the
+                    // SignalR connection is active.
+                    // ------------------------------------------------
+
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        knownParticipants.Add(name);
+
+                        if (connected)
+                        {
+                            onlineUsers.Add(name);
+
+                            CancelOfflineRemoval(
+                                name);
+                        }
                     }
 
                     StateHasChanged();
@@ -1831,22 +2020,42 @@ else
             {
                 await InvokeAsync(() =>
                 {
-                    if (!string.IsNullOrWhiteSpace(userName))
+                    if (string.IsNullOrWhiteSpace(
+                            userName))
                     {
-                        var normalizedUserName = userName.Trim();
+                        return;
+                    }
 
-                        knownParticipants.Add(normalizedUserName);
+                    var normalizedUserName =
+                        userName.Trim();
 
-                        if (isOnline)
-                        {
-                            onlineUsers.Add(normalizedUserName);
-                            CancelOfflineRemoval(normalizedUserName);
-                        }
-                        else
-                        {
-                            onlineUsers.Remove(normalizedUserName);
-                            ScheduleOfflineRemoval(normalizedUserName);
-                        }
+                    // Always keep participant known.
+                    knownParticipants.Add(
+                        normalizedUserName);
+
+                    if (isOnline)
+                    {
+                        // --------------------------------------------
+                        // USER ONLINE
+                        // --------------------------------------------
+
+                        onlineUsers.Add(
+                            normalizedUserName);
+
+                        CancelOfflineRemoval(
+                            normalizedUserName);
+                    }
+                    else
+                    {
+                        // --------------------------------------------
+                        // USER OFFLINE
+                        // --------------------------------------------
+
+                        onlineUsers.Remove(
+                            normalizedUserName);
+
+                        ScheduleOfflineRemoval(
+                            normalizedUserName);
                     }
 
                     StateHasChanged();
@@ -2030,7 +2239,14 @@ else
 
         hub.Reconnecting += _ =>
         {
+            // SignalR is temporarily disconnected.
             connected = false;
+
+            // Current user should immediately show Offline.
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                onlineUsers.Remove(name);
+            }
 
             return InvokeAsync(
                 StateHasChanged);
@@ -2050,16 +2266,26 @@ else
 
             try
             {
+                // Join the room again after reconnect.
                 await hub.InvokeAsync(
                     "JoinRoom",
                     RoomCode,
                     name);
 
                 connected = true;
+
+                // Current user is online again.
+                knownParticipants.Add(name);
+
+                onlineUsers.Add(name);
+
+                CancelOfflineRemoval(name);
             }
             catch
             {
                 connected = false;
+
+                onlineUsers.Remove(name);
             }
 
             await InvokeAsync(
@@ -2075,7 +2301,12 @@ else
         {
             connected = false;
 
-            onlineUsers.Remove(name);
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                onlineUsers.Remove(name);
+
+                CancelOfflineRemoval(name);
+            }
 
             return InvokeAsync(
                 StateHasChanged);
@@ -2095,12 +2326,82 @@ else
 
         connected = true;
 
+        // Current user is definitely online after successful join.
+        knownParticipants.Add(name);
+        onlineUsers.Add(name);
+
+        CancelOfflineRemoval(name);
+
         StartSeenTimer();
+
+        // Start heartbeat AFTER successful JoinRoom.
+        StartPresenceHeartbeat();
 
         await InvokeAsync(
             StateHasChanged);
 
         await ScrollToBottomAsync();
+    }
+
+
+    // ============================================================
+    // PRESENCE HEARTBEAT
+    // ============================================================
+
+    private void StartPresenceHeartbeat()
+    {
+        if (presenceHeartbeatTimer is not null)
+        {
+            return;
+        }
+
+        presenceHeartbeatCts =
+            new CancellationTokenSource();
+
+        presenceHeartbeatTimer =
+            new PeriodicTimer(
+                TimeSpan.FromSeconds(10));
+
+        _ =
+            RunPresenceHeartbeatAsync(
+                presenceHeartbeatCts.Token);
+    }
+
+
+    private async Task RunPresenceHeartbeatAsync(
+        CancellationToken token)
+    {
+        try
+        {
+            while (
+                presenceHeartbeatTimer is not null &&
+                await presenceHeartbeatTimer.WaitForNextTickAsync(
+                    token))
+            {
+                if (hub is null ||
+                    !connected)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await hub.InvokeAsync(
+                        "PresenceHeartbeat");
+                }
+                catch
+                {
+                    // SignalR may currently be reconnecting.
+                    // Keep heartbeat loop alive.
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+        }
     }
 
 
@@ -2135,7 +2436,8 @@ else
                     name,
                     RoomCode);
 
-            notificationsEnabled = success;
+            notificationsEnabled =
+                success;
 
             if (success)
             {
@@ -2144,7 +2446,8 @@ else
 
                 showToast = true;
 
-                _ = HideToastLaterAsync();
+                _ =
+                    HideToastLaterAsync();
             }
             else
             {
@@ -2422,8 +2725,10 @@ else
     private void OpenMobileInfo()
     {
         mobileInfoOpen = true;
+
         CloseFloatingActions();
     }
+
 
     private void CloseMobileInfo()
     {
@@ -2440,7 +2745,8 @@ else
     {
         selectedMessage = message;
 
-        deleteMode = DeleteMode.DeleteForMe;
+        deleteMode =
+            DeleteMode.DeleteForMe;
 
         showDeleteModal = true;
 
@@ -2460,7 +2766,8 @@ else
 
         selectedMessage = message;
 
-        deleteMode = DeleteMode.Unsend;
+        deleteMode =
+            DeleteMode.Unsend;
 
         showDeleteModal = true;
 
@@ -2477,8 +2784,11 @@ else
         }
 
         showDeleteModal = false;
+
         selectedMessage = null;
-        deleteMode = DeleteMode.DeleteForMe;
+
+        deleteMode =
+            DeleteMode.DeleteForMe;
     }
 
 
@@ -2498,7 +2808,8 @@ else
 
         try
         {
-            if (deleteMode == DeleteMode.DeleteForMe)
+            if (deleteMode ==
+                DeleteMode.DeleteForMe)
             {
                 await hub.InvokeAsync(
                     "DeleteMessageForMe",
@@ -2507,6 +2818,7 @@ else
                     name);
 
                 showDeleteModal = false;
+
                 selectedMessage = null;
             }
             else
@@ -2518,6 +2830,7 @@ else
                     name);
 
                 showDeleteModal = false;
+
                 selectedMessage = null;
             }
 
@@ -2530,6 +2843,7 @@ else
                 $"Unable to delete message: {ex.Message}";
 
             showDeleteModal = false;
+
             selectedMessage = null;
 
             await InvokeAsync(
@@ -2674,7 +2988,8 @@ else
 
         if (text.Length > 2000)
         {
-            text = text[..2000];
+            text =
+                text[..2000];
         }
 
         var replyId =
@@ -2730,7 +3045,8 @@ else
                         "eval",
                         "window.location.origin");
 
-                if (!string.IsNullOrWhiteSpace(browserOrigin))
+                if (!string.IsNullOrWhiteSpace(
+                        browserOrigin))
                 {
                     publicOrigin =
                         browserOrigin.TrimEnd('/');
@@ -2802,7 +3118,11 @@ else
         try
         {
             typingCts?.Cancel();
+
             seenTimerCts?.Cancel();
+
+            // Stop heartbeat before leaving.
+            presenceHeartbeatCts?.Cancel();
 
             if (hub is not null)
             {
@@ -2819,6 +3139,11 @@ else
 
             connected = false;
 
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                onlineUsers.Remove(name);
+            }
+
             Navigation.NavigateTo(
                 "/",
                 forceLoad: true);
@@ -2826,6 +3151,7 @@ else
         catch
         {
             isLeaving = false;
+
             showLeaveModal = false;
 
             await InvokeAsync(
@@ -2959,7 +3285,7 @@ else
                 pushModule = null;
             }
 
-            // Most reliable source for the public URL.
+            // Get actual browser origin.
             try
             {
                 var browserOrigin =
@@ -2967,7 +3293,8 @@ else
                         "eval",
                         "window.location.origin");
 
-                if (!string.IsNullOrWhiteSpace(browserOrigin))
+                if (!string.IsNullOrWhiteSpace(
+                        browserOrigin))
                 {
                     var normalized =
                         browserOrigin.TrimEnd('/');
@@ -2977,7 +3304,8 @@ else
                             normalized,
                             StringComparison.OrdinalIgnoreCase))
                     {
-                        publicOrigin = normalized;
+                        publicOrigin =
+                            normalized;
 
                         await InvokeAsync(
                             StateHasChanged);
@@ -3029,6 +3357,10 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        // --------------------------------------------------------
+        // STOP TYPING TIMER
+        // --------------------------------------------------------
+
         try
         {
             typingCts?.Cancel();
@@ -3037,6 +3369,33 @@ else
         catch
         {
         }
+
+
+        // --------------------------------------------------------
+        // STOP PRESENCE HEARTBEAT
+        // --------------------------------------------------------
+
+        try
+        {
+            presenceHeartbeatCts?.Cancel();
+            presenceHeartbeatCts?.Dispose();
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            presenceHeartbeatTimer?.Dispose();
+        }
+        catch
+        {
+        }
+
+
+        // --------------------------------------------------------
+        // STOP SEEN TIMER
+        // --------------------------------------------------------
 
         try
         {
@@ -3055,9 +3414,16 @@ else
         {
         }
 
+
+        // --------------------------------------------------------
+        // STOP OFFLINE REMOVAL TIMERS
+        // --------------------------------------------------------
+
         try
         {
-            foreach (var cts in offlineRemovalTimers.Values.ToList())
+            foreach (
+                var cts
+                in offlineRemovalTimers.Values.ToList())
             {
                 try
                 {
@@ -3075,6 +3441,11 @@ else
         {
         }
 
+
+        // --------------------------------------------------------
+        // DISPOSE DOTNET REFERENCE
+        // --------------------------------------------------------
+
         try
         {
             dotNetReference?.Dispose();
@@ -3082,6 +3453,11 @@ else
         catch
         {
         }
+
+
+        // --------------------------------------------------------
+        // DISPOSE PUSH MODULE
+        // --------------------------------------------------------
 
         try
         {
@@ -3093,6 +3469,11 @@ else
         catch
         {
         }
+
+
+        // --------------------------------------------------------
+        // DISPOSE SIGNALR
+        // --------------------------------------------------------
 
         try
         {
