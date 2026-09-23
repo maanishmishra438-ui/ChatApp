@@ -61,6 +61,17 @@ builder.Services.AddHostedService<
 
 
 // ================================================================
+// PRESENCE CLEANUP
+// ================================================================
+
+// Removes users who stopped sending presence heartbeats.
+// Presence is kept in server memory only.
+// Nothing is added to the database.
+builder.Services.AddHostedService<
+    PresenceCleanupService>();
+
+
+// ================================================================
 // FORWARDED HEADERS
 // IMPORTANT FOR RENDER / REVERSE PROXY / HTTPS
 // ================================================================
@@ -73,6 +84,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(
             ForwardedHeaders.XForwardedProto |
             ForwardedHeaders.XForwardedHost;
 
+        // Render works behind a reverse proxy.
+        // Clear these so forwarded headers are accepted.
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
     });

@@ -23,7 +23,31 @@ public sealed class ChatHub(
         string,
         PresenceInfo>
         ConnectionPresence =
-            new();
+            new(StringComparer.OrdinalIgnoreCase);
+
+    // ------------------------------------------------------------
+    // Last heartbeat/activity received from each connection.
+    // This is NOT stored in the database.
+    // ------------------------------------------------------------
+
+    private static readonly Dictionary<
+        string,
+        DateTime>
+        ConnectionLastSeen =
+            new(StringComparer.OrdinalIgnoreCase);
+
+
+    // ------------------------------------------------------------
+    // If a connection does not send a heartbeat for this long,
+    // it is considered stale/offline.
+    //
+    // Client heartbeat will normally be sent every 10 seconds.
+    // 45 seconds gives enough tolerance for browser throttling.
+    // ------------------------------------------------------------
+
+    private static readonly TimeSpan StaleConnectionTimeout =
+        TimeSpan.FromSeconds(45);
+
 
     private sealed record PresenceInfo(
         string RoomCode,
@@ -68,6 +92,10 @@ public sealed class ChatHub(
         }
 
 
+        // --------------------------------------------------------
+        // Add connection to SignalR group
+        // --------------------------------------------------------
+
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             roomCode);
@@ -80,6 +108,10 @@ public sealed class ChatHub(
 
         lock (PresenceLock)
         {
+            // ----------------------------------------------------
+            // Get/create room
+            // ----------------------------------------------------
+
             if (!RoomConnections.TryGetValue(
                     roomCode,
                     out var roomUsers))
@@ -94,6 +126,10 @@ public sealed class ChatHub(
                     roomUsers;
             }
 
+
+            // ----------------------------------------------------
+            // Get/create user's connections
+            // ----------------------------------------------------
 
             if (!roomUsers.TryGetValue(
                     userName,
@@ -110,9 +146,17 @@ public sealed class ChatHub(
             }
 
 
+            // ----------------------------------------------------
+            // Add this SignalR connection
+            // ----------------------------------------------------
+
             connections.Add(
                 Context.ConnectionId);
 
+
+            // ----------------------------------------------------
+            // Store connection presence
+            // ----------------------------------------------------
 
             ConnectionPresence[
                 Context.ConnectionId] =
@@ -120,6 +164,19 @@ public sealed class ChatHub(
                     roomCode,
                     userName);
 
+
+            // ----------------------------------------------------
+            // Mark connection alive
+            // ----------------------------------------------------
+
+            ConnectionLastSeen[
+                Context.ConnectionId] =
+                DateTime.UtcNow;
+
+
+            // ----------------------------------------------------
+            // Build online user list
+            // ----------------------------------------------------
 
             onlineUsers =
                 roomUsers
@@ -137,13 +194,19 @@ public sealed class ChatHub(
         }
 
 
-        // Send current online users to this client.
+        // --------------------------------------------------------
+        // Send current online users to caller
+        // --------------------------------------------------------
+
         await Clients.Caller.SendAsync(
             "RoomPresenceSnapshot",
             onlineUsers);
 
 
-        // Tell everyone when a user becomes online.
+        // --------------------------------------------------------
+        // Tell everyone when a user becomes online
+        // --------------------------------------------------------
+
         if (becameOnline)
         {
             await Clients.Group(roomCode)
@@ -152,6 +215,35 @@ public sealed class ChatHub(
                     userName,
                     true);
         }
+    }
+
+
+    // ============================================================
+    // HEARTBEAT
+    // ============================================================
+    //
+    // Client calls this periodically.
+    //
+    // IMPORTANT:
+    // Nothing is written to the database.
+    //
+    // This only updates in-memory presence.
+    // ============================================================
+
+    public Task PresenceHeartbeat()
+    {
+        lock (PresenceLock)
+        {
+            if (ConnectionPresence.ContainsKey(
+                    Context.ConnectionId))
+            {
+                ConnectionLastSeen[
+                    Context.ConnectionId] =
+                    DateTime.UtcNow;
+            }
+        }
+
+        return Task.CompletedTask;
     }
 
 
@@ -248,9 +340,6 @@ public sealed class ChatHub(
 
         // --------------------------------------------------------
         // WEB PUSH NOTIFICATION
-        // --------------------------------------------------------
-        // Queue the notification instead of waiting for the
-        // external push provider. This keeps chat response fast.
         // --------------------------------------------------------
 
         try
@@ -512,6 +601,141 @@ public sealed class ChatHub(
 
 
     // ============================================================
+    // REMOVE STALE CONNECTIONS
+    // ============================================================
+    //
+    // Called by PresenceCleanupService every 15 seconds.
+    //
+    // If a connection has not sent heartbeat for 45 seconds,
+    // we consider that connection dead/stale.
+    //
+    // Returns users that became completely offline.
+    // ============================================================
+
+    public static List<OfflinePresence> RemoveStaleConnections()
+    {
+        var offlineUsers =
+            new List<OfflinePresence>();
+
+
+        var now =
+            DateTime.UtcNow;
+
+
+        lock (PresenceLock)
+        {
+            // ----------------------------------------------------
+            // Find stale connections
+            // ----------------------------------------------------
+
+            var staleConnections =
+                ConnectionLastSeen
+                    .Where(
+                        x =>
+                            now - x.Value >
+                            StaleConnectionTimeout)
+                    .Select(
+                        x =>
+                            x.Key)
+                    .ToList();
+
+
+            foreach (var connectionId in staleConnections)
+            {
+                // ------------------------------------------------
+                // Get presence information
+                // ------------------------------------------------
+
+                if (!ConnectionPresence.TryGetValue(
+                        connectionId,
+                        out var presence))
+                {
+                    ConnectionLastSeen.Remove(
+                        connectionId);
+
+                    continue;
+                }
+
+
+                // ------------------------------------------------
+                // Remove connection tracking
+                // ------------------------------------------------
+
+                ConnectionPresence.Remove(
+                    connectionId);
+
+                ConnectionLastSeen.Remove(
+                    connectionId);
+
+
+                // ------------------------------------------------
+                // Find room
+                // ------------------------------------------------
+
+                if (!RoomConnections.TryGetValue(
+                        presence.RoomCode,
+                        out var roomUsers))
+                {
+                    continue;
+                }
+
+
+                // ------------------------------------------------
+                // Find user
+                // ------------------------------------------------
+
+                if (!roomUsers.TryGetValue(
+                        presence.UserName,
+                        out var connections))
+                {
+                    continue;
+                }
+
+
+                // ------------------------------------------------
+                // Remove stale connection
+                // ------------------------------------------------
+
+                connections.Remove(
+                    connectionId);
+
+
+                // ------------------------------------------------
+                // User is offline only when ALL
+                // their connections are gone.
+                // ------------------------------------------------
+
+                if (connections.Count == 0)
+                {
+                    roomUsers.Remove(
+                        presence.UserName);
+
+
+                    offlineUsers.Add(
+                        new OfflinePresence(
+                            presence.RoomCode,
+                            presence.UserName));
+                }
+
+
+                // ------------------------------------------------
+                // Remove empty room
+                // ------------------------------------------------
+
+                if (roomUsers.Count == 0)
+                {
+                    RoomConnections.Remove(
+                        presence.RoomCode);
+                }
+            }
+        }
+
+
+        return offlineUsers;
+    }
+
+
+    // ============================================================
     // DISCONNECTED
     // ============================================================
 
@@ -519,11 +743,16 @@ public sealed class ChatHub(
         Exception? exception)
     {
         PresenceInfo? presence = null;
+
         bool becameOffline = false;
 
 
         lock (PresenceLock)
         {
+            // ----------------------------------------------------
+            // Get presence
+            // ----------------------------------------------------
+
             if (ConnectionPresence.TryGetValue(
                     Context.ConnectionId,
                     out var currentPresence))
@@ -531,9 +760,21 @@ public sealed class ChatHub(
                 presence =
                     currentPresence;
 
+
+                // ------------------------------------------------
+                // Remove connection tracking
+                // ------------------------------------------------
+
                 ConnectionPresence.Remove(
                     Context.ConnectionId);
 
+                ConnectionLastSeen.Remove(
+                    Context.ConnectionId);
+
+
+                // ------------------------------------------------
+                // Remove from room
+                // ------------------------------------------------
 
                 if (RoomConnections.TryGetValue(
                         presence.RoomCode,
@@ -547,6 +788,10 @@ public sealed class ChatHub(
                             Context.ConnectionId);
 
 
+                        // ----------------------------------------
+                        // No other connection for this user
+                        // ----------------------------------------
+
                         if (connections.Count == 0)
                         {
                             roomUsers.Remove(
@@ -557,6 +802,10 @@ public sealed class ChatHub(
                     }
 
 
+                    // --------------------------------------------
+                    // Remove empty room
+                    // --------------------------------------------
+
                     if (roomUsers.Count == 0)
                     {
                         RoomConnections.Remove(
@@ -566,6 +815,10 @@ public sealed class ChatHub(
             }
         }
 
+
+        // --------------------------------------------------------
+        // Notify room
+        // --------------------------------------------------------
 
         if (becameOffline &&
             presence is not null)
@@ -582,4 +835,13 @@ public sealed class ChatHub(
         await base.OnDisconnectedAsync(
             exception);
     }
+
+
+    // ============================================================
+    // OFFLINE PRESENCE RESULT
+    // ============================================================
+
+    public sealed record OfflinePresence(
+        string RoomCode,
+        string UserName);
 }
