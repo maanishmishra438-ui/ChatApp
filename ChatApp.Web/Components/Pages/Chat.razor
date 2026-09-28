@@ -846,22 +846,95 @@ else
 
                 <footer class="composer">
 
-                    <textarea @ref="messageInput"
-                              @bind="draft"
-                              @bind:event="oninput"
-                              @onkeydown="HandleKeyDown"
-                              placeholder="Type a message..."
-                              rows="1"
-                              maxlength="2000"
-                              autocomplete="off"></textarea>
+                    <button type="button"
+                            class="composer-emoji-button composer-emoji-desktop"
+                            @onclick="ToggleComposerEmojiPicker"
+                            aria-label="Open emoji picker"
+                            title="Emoji">
+                        😊
+                    </button>
+
+                    <button type="button"
+                            class="composer-emoji-button composer-emoji-mobile"
+                            @onclick="FocusMessageInput"
+                            aria-label="Open keyboard emoji picker"
+                            title="Emoji">
+                        +
+                    </button>
+
+                    <div class="composer-input-wrap">
+                        <textarea @ref="messageInput"
+                                  @bind="draft"
+                                  @bind:event="oninput"
+                                  @onkeydown="HandleKeyDown"
+                                  placeholder="Type a message..."
+                                  rows="1"
+                                  maxlength="2000"
+                                  autocomplete="off"></textarea>
+
+                        @if (composerEmojiPickerOpen)
+                        {
+                            <div class="composer-emoji-picker"
+                                 @onclick:stopPropagation="true">
+
+                                <div class="composer-emoji-header">
+                                    <div>
+                                        <strong>Emoji</strong>
+                                        <span>Pick an emoji</span>
+                                    </div>
+
+                                    <button type="button"
+                                            class="composer-emoji-close"
+                                            @onclick="ToggleComposerEmojiPicker"
+                                            aria-label="Close emoji picker">
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div class="composer-emoji-search">
+                                    <span>⌕</span>
+                                    <input @bind="emojiSearch"
+                                           @bind:event="oninput"
+                                           placeholder="Search emoji..."
+                                           autocomplete="off"
+                                           aria-label="Search emoji" />
+                                </div>
+
+                                <div class="composer-emoji-categories">
+                                    @foreach (var category in EmojiCategories)
+                                    {
+                                        <button type="button"
+                                                class="composer-emoji-category @(emojiCategory == category.Key ? "active" : "")"
+                                                @onclick="() => SelectEmojiCategory(category.Key)"
+                                                title="@category.Value.Name"
+                                                aria-label="@category.Value.Name">
+                                            @category.Value.Icon
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="composer-emoji-grid">
+                                    @foreach (var emoji in GetFilteredEmojis())
+                                    {
+                                        <button type="button"
+                                                class="composer-emoji-grid-button"
+                                                @onclick="() => InsertComposerEmoji(emoji)"
+                                                title="@emoji"
+                                                aria-label="Insert @emoji">
+                                            @emoji
+                                        </button>
+                                    }
+                                </div>
+
+                            </div>
+                        }
+                    </div>
 
                     <button class="send"
                             @onclick="Send"
                             disabled="@(!connected || string.IsNullOrWhiteSpace(draft))"
                             title="Send message">
-
                         →
-
                     </button>
 
                 </footer>
@@ -1169,7 +1242,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                 selectedMessage is not null)
+                     selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1401,6 +1474,7 @@ else
     };
 
     private long? emojiBrowserMessageId;
+    private bool composerEmojiPickerOpen;
     private string emojiSearch = string.Empty;
     private string emojiCategory = "smileys";
 
@@ -2672,6 +2746,7 @@ else
         long messageId)
     {
         reactionPickerMessageId = null;
+        composerEmojiPickerOpen = false;
 
         openMenuMessageId =
             openMenuMessageId == messageId
@@ -2684,10 +2759,70 @@ else
     // REACTIONS
     // ============================================================
 
+    private void ToggleComposerEmojiPicker()
+    {
+        composerEmojiPickerOpen = !composerEmojiPickerOpen;
+
+        if (composerEmojiPickerOpen)
+        {
+            openMenuMessageId = null;
+            reactionPickerMessageId = null;
+            emojiBrowserMessageId = null;
+            emojiSearch = string.Empty;
+            emojiCategory = "smileys";
+        }
+    }
+
+
+    private async Task InsertComposerEmoji(
+        string emoji)
+    {
+        if (string.IsNullOrWhiteSpace(emoji))
+        {
+            return;
+        }
+
+        var nextDraft =
+            draft + emoji;
+
+        if (nextDraft.Length > 2000)
+        {
+            return;
+        }
+
+        draft = nextDraft;
+
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "chatApp.focusMessageInput");
+        }
+        catch
+        {
+        }
+    }
+
+
+    private async Task FocusMessageInput()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "chatApp.focusMessageInput");
+        }
+        catch
+        {
+        }
+    }
+
+
     private void ToggleReactionPicker(
         long messageId)
     {
         openMenuMessageId = null;
+        composerEmojiPickerOpen = false;
 
         if (reactionPickerMessageId == messageId)
         {
@@ -2849,6 +2984,7 @@ else
     {
         openMenuMessageId = null;
         reactionPickerMessageId = null;
+        composerEmojiPickerOpen = false;
     }
 
 
@@ -3130,6 +3266,8 @@ else
             text =
                 text[..2000];
         }
+
+        composerEmojiPickerOpen = false;
 
         var replyId =
             replyingTo?.Id;
