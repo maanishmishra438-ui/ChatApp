@@ -856,10 +856,10 @@ else
 
                     <button type="button"
                             class="composer-emoji-button composer-emoji-mobile"
-                            @onclick="FocusMessageInput"
-                            aria-label="Open keyboard emoji picker"
+                            onclick="window.chatApp?.focusMessageInput?.()"
+                            aria-label="Open phone keyboard for emojis"
                             title="Emoji">
-                        +
+                        😊
                     </button>
 
                     <div class="composer-input-wrap">
