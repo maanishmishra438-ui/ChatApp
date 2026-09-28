@@ -856,8 +856,8 @@ else
 
                     <button type="button"
                             class="composer-emoji-button composer-emoji-mobile"
-                            onclick="window.chatApp?.focusMessageInput?.()"
-                            aria-label="Open phone keyboard for emojis"
+                            @onclick="ToggleMobileComposerEmojiPicker"
+                            aria-label="Open emoji picker"
                             title="Emoji">
                         😊
                     </button>
@@ -871,6 +871,37 @@ else
                                   rows="1"
                                   maxlength="2000"
                                   autocomplete="off"></textarea>
+
+                        @if (mobileComposerEmojiOpen)
+                        {
+                            <div class="mobile-composer-emoji-panel"
+                                 @onclick:stopPropagation="true">
+                                <div class="mobile-composer-emoji-header">
+                                    <div>
+                                        <strong>Emoji</strong>
+                                        <span>Tap to add</span>
+                                    </div>
+                                    <button type="button"
+                                            class="mobile-composer-emoji-close"
+                                            @onclick="CloseMobileComposerEmojiPicker"
+                                            aria-label="Close emoji picker">
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div class="mobile-composer-emoji-grid">
+                                    @foreach (var emoji in MobileComposerEmojiOptions)
+                                    {
+                                        <button type="button"
+                                                class="mobile-composer-emoji-item"
+                                                @onclick="() => InsertMobileComposerEmoji(emoji)"
+                                                aria-label="Insert @emoji">
+                                            @emoji
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
 
                         @if (composerEmojiPickerOpen)
                         {
@@ -1473,8 +1504,21 @@ else
         "👍", "❤️", "😂", "😮", "😢", "👏", "🔥", "🎉"
     };
 
+    private static readonly string[] MobileComposerEmojiOptions =
+    {
+        "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
+        "😊", "😇", "🙂", "🙃", "😉", "😍", "🥰", "😘",
+        "😎", "🤩", "🥳", "😏", "🤔", "🤭", "😴", "😭",
+        "😤", "😡", "🤯", "😱", "🤗", "😶", "🙄", "😮",
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
+        "💔", "💕", "💯", "🔥", "✨", "⭐", "🎉", "🎊",
+        "👍", "👎", "👏", "🙏", "💪", "🤝", "👋", "👌",
+        "✌️", "🤞", "🫶", "💖", "💗", "💘", "💝", "💟"
+    };
+
     private long? emojiBrowserMessageId;
     private bool composerEmojiPickerOpen;
+    private bool mobileComposerEmojiOpen;
     private string emojiSearch = string.Empty;
     private string emojiCategory = "smileys";
 
@@ -2805,12 +2849,58 @@ else
     }
 
 
-    private async Task FocusMessageInput()
+    private void ToggleMobileComposerEmojiPicker()
+    {
+        mobileComposerEmojiOpen = !mobileComposerEmojiOpen;
+        composerEmojiPickerOpen = false;
+        openMenuMessageId = null;
+        reactionPickerMessageId = null;
+        emojiBrowserMessageId = null;
+    }
+
+
+    private void CloseMobileComposerEmojiPicker()
+    {
+        mobileComposerEmojiOpen = false;
+    }
+
+
+    private async Task InsertMobileComposerEmoji(string emoji)
+    {
+        if (string.IsNullOrWhiteSpace(emoji))
+        {
+            return;
+        }
+
+        var nextDraft = draft + emoji;
+
+        if (nextDraft.Length > 2000)
+        {
+            return;
+        }
+
+        draft = nextDraft;
+        mobileComposerEmojiOpen = false;
+
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await JS.InvokeVoidAsync("chatApp.focusMessageInput");
+        }
+        catch
+        {
+        }
+    }
+
+
+    private async Task BlurMobileComposerAsync()
     {
         try
         {
             await JS.InvokeVoidAsync(
-                "chatApp.focusMessageInput");
+                "eval",
+                "document.activeElement?.blur?.();");
         }
         catch
         {
@@ -3268,6 +3358,7 @@ else
         }
 
         composerEmojiPickerOpen = false;
+        mobileComposerEmojiOpen = false;
 
         var replyId =
             replyingTo?.Id;
@@ -3292,6 +3383,8 @@ else
             typingCts?.Cancel();
 
             replyingTo = null;
+
+            await BlurMobileComposerAsync();
 
             await InvokeAsync(
                 StateHasChanged);
@@ -3548,6 +3641,45 @@ else
             {
                 await JS.InvokeVoidAsync(
                     "chatApp.initialize");
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await JS.InvokeVoidAsync(
+                    "eval",
+                    @"(() => {
+                        const api = window.chatApp = window.chatApp || {};
+                        api.focusMessageInput = () => {
+                            const el = document.querySelector('.composer-input-wrap textarea');
+                            if (!el) return;
+                            try { el.focus({ preventScroll: true }); } catch { el.focus(); }
+                            requestAnimationFrame(() => {
+                                try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch {}
+                            });
+                        };
+                        api.blurMessageInput = () => {
+                            const el = document.querySelector('.composer-input-wrap textarea');
+                            try { el?.blur?.(); } catch {}
+                            try { document.activeElement?.blur?.(); } catch {}
+                        };
+                        if (!window.__chatAppMobileViewportBound) {
+                            window.__chatAppMobileViewportBound = true;
+                            const root = document.documentElement;
+                            const syncViewport = () => {
+                                const vv = window.visualViewport;
+                                const height = vv?.height || window.innerHeight;
+                                root.style.setProperty('--chat-visual-height', `${height}px`);
+                                root.classList.toggle('chat-keyboard-visible', !!vv && (window.innerHeight - vv.height) > 120);
+                            };
+                            window.addEventListener('resize', syncViewport, { passive: true });
+                            window.visualViewport?.addEventListener('resize', syncViewport, { passive: true });
+                            window.visualViewport?.addEventListener('scroll', syncViewport, { passive: true });
+                            syncViewport();
+                        }
+                    })();");
             }
             catch
             {
