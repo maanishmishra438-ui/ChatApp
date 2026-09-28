@@ -1,6 +1,7 @@
 ﻿using ChatApp.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace ChatApp.Web.Services;
 
@@ -579,19 +580,10 @@ public sealed class ChatService(
                 "Reaction is required.");
         }
 
-        var allowedReactions =
-            new HashSet<string>
-            {
-                "👍",
-                "❤️",
-                "😂",
-                "😮",
-                "😢",
-                "👎"
-            };
-
-        if (!allowedReactions.Contains(
-                reaction))
+        // Reactions are Unicode emoji, not a fixed six-item whitelist.
+        // Keep the server-side validation so arbitrary text cannot be stored
+        // as a reaction, while allowing the full Unicode emoji range.
+        if (!IsValidEmojiReaction(reaction))
         {
             throw new ArgumentException(
                 "Invalid reaction.");
@@ -847,6 +839,65 @@ public sealed class ChatService(
                         senderName,
                         StringComparison.OrdinalIgnoreCase))
             .ToList();
+    }
+
+
+    // ============================================================
+    // EMOJI REACTION VALIDATION
+    // ============================================================
+
+    private static bool IsValidEmojiReaction(
+        string reaction)
+    {
+        if (string.IsNullOrWhiteSpace(reaction))
+        {
+            return false;
+        }
+
+        reaction = reaction.Trim();
+
+        // A reaction should be short enough to represent one emoji or
+        // one normal emoji sequence (skin tone, ZWJ, variation selector,
+        // flags, etc.).
+        if (reaction.Length > 32)
+        {
+            return false;
+        }
+
+        var hasEmojiBase = false;
+
+        foreach (var rune in reaction.EnumerateRunes())
+        {
+            var value = rune.Value;
+
+            // Unicode emoji blocks commonly used by modern emoji pickers.
+            var isEmojiBase =
+                value is >= 0x1F000 and <= 0x1FAFF ||
+                value is >= 0x2600 and <= 0x27BF ||
+                value is >= 0x2300 and <= 0x23FF;
+
+            // Allow emoji modifiers, variation selectors, ZWJ and regional
+            // indicator symbols used to build valid emoji sequences.
+            var isEmojiComponent =
+                value is >= 0x1F3FB and <= 0x1F3FF ||
+                value is 0x200D ||
+                value is 0xFE0E ||
+                value is 0xFE0F ||
+                value is >= 0x1F1E6 and <= 0x1F1FF;
+
+            if (isEmojiBase)
+            {
+                hasEmojiBase = true;
+                continue;
+            }
+
+            if (!isEmojiComponent)
+            {
+                return false;
+            }
+        }
+
+        return hasEmojiBase;
     }
 
 

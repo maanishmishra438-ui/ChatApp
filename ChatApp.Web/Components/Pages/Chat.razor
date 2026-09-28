@@ -469,23 +469,89 @@ else
                                  data-is-read="@message.IsRead.ToString().ToLowerInvariant()"
                                  @onclick:stopPropagation="true">
 
-                                <!-- REACTION PICKER -->
+                                <!-- REACTION / EMOJI PICKER -->
                                 @if (reactionPickerMessageId == message.Id &&
                                                     !message.IsDeleted)
                                 {
                                     <div class="reaction-picker"
                                          @onclick:stopPropagation="true">
 
-                                        @foreach (var reaction in ReactionOptions)
-                                        {
+                                        <div class="reaction-quick-row">
+                                            @foreach (var reaction in QuickReactionOptions)
+                                            {
+                                                <button type="button"
+                                                        class="reaction-picker-button @(HasUserReaction(message, reaction) ? "selected" : "")"
+                                                        @onclick="() => ReactToMessage(message, reaction)"
+                                                        title="React with @reaction"
+                                                        aria-label="React with @reaction">
+                                                    @reaction
+                                                </button>
+                                            }
+
                                             <button type="button"
-                                                    class="reaction-picker-button @(HasUserReaction(message, reaction) ? "selected" : "")"
-                                                    @onclick="() => ReactToMessage(message, reaction)"
-                                                    title="React with @reaction">
-
-                                                @reaction
-
+                                                    class="reaction-picker-button emoji-more-button"
+                                                    @onclick="() => ToggleEmojiBrowser(message.Id)"
+                                                    title="More emojis"
+                                                    aria-label="More emojis">
+                                                +
                                             </button>
+                                        </div>
+
+                                        @if (emojiBrowserMessageId == message.Id)
+                                        {
+                                            <div class="emoji-browser">
+                                                <div class="emoji-browser-header">
+                                                    <div class="emoji-browser-title">
+                                                        <span>Emoji</span>
+                                                        <small>Choose a reaction</small>
+                                                    </div>
+
+                                                    <button type="button"
+                                                            class="emoji-browser-close"
+                                                            @onclick="CloseEmojiBrowser"
+                                                            title="Close emoji picker"
+                                                            aria-label="Close emoji picker">
+                                                        ×
+                                                    </button>
+                                                </div>
+
+                                                <div class="emoji-search-wrap">
+                                                    <span class="emoji-search-icon">⌕</span>
+                                                    <input class="emoji-search"
+                                                           @bind="emojiSearch"
+                                                           @bind:event="oninput"
+                                                           placeholder="Search emoji..."
+                                                           autocomplete="off"
+                                                           aria-label="Search emoji" />
+                                                </div>
+
+                                                <div class="emoji-category-row">
+                                                    @foreach (var category in EmojiCategories)
+                                                    {
+                                                        <button type="button"
+                                                                class="emoji-category-button @(emojiCategory == category.Key ? "active" : "")"
+                                                                @onclick="() => SelectEmojiCategory(category.Key)"
+                                                                title="@category.Value.Name"
+                                                                aria-label="@category.Value.Name">
+                                                            @category.Value.Icon
+                                                        </button>
+                                                    }
+                                                </div>
+
+                                                <div class="emoji-grid">
+                                                    @foreach (var emoji in GetFilteredEmojis())
+                                                    {
+                                                        <button type="button"
+                                                                class="emoji-grid-button @(HasUserReaction(message, emoji) ? "selected" : "")"
+                                                                @onclick="() => ReactToMessage(message, emoji)"
+                                                                title="React with @emoji"
+                                                                aria-label="React with @emoji">
+                                                            @emoji
+                                                        </button>
+                                                    }
+                                                </div>
+
+                                            </div>
                                         }
 
                                     </div>
@@ -1103,7 +1169,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-             selectedMessage is not null)
+                 selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1329,15 +1395,30 @@ else
     // REACTION OPTIONS
     // ============================================================
 
-    private static readonly string[] ReactionOptions =
+    private static readonly string[] QuickReactionOptions =
     {
-        "👍",
-        "❤️",
-        "😂",
-        "😮",
-        "😢",
-        "👎"
+        "👍", "❤️", "😂", "😮", "😢", "👏", "🔥", "🎉"
     };
+
+    private long? emojiBrowserMessageId;
+    private string emojiSearch = string.Empty;
+    private string emojiCategory = "smileys";
+
+    private static readonly IReadOnlyDictionary<string, EmojiCategory> EmojiCategories =
+        new Dictionary<string, EmojiCategory>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["smileys"] = new("Smileys & Emotion", "😀", "😀 😃 😄 😁 😆 😅 😂 🤣 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😝 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 🤭 🤫 🤥 😶 😐 😑 😬 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕 🤑 🤠"),
+            ["people"] = new("People & Body", "👋", "👋 🤚 🖐️ ✋ 🖖 👌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✍️ 👏 🙌 👐 🤲 🤝 🙏 💪 🦾 🦿 🫶 🫂 👀 👁️ 👅 👄 💋 👶 🧒 👦 👧 🧑 👨 👩 🧔 👵 👴 🧓"),
+            ["animals"] = new("Animals & Nature", "🐻", "🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐒 🐔 🐧 🐦 🐤 🐣 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🪲 🐛 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦀 🐠 🐟 🐡 🐬 🐳 🐋 🦈 🐊 🐅 🐆 🦓 🦍 🐘 🦒 🦘 🦥 🦦 🦨 🦡 🐪 🐫 🦏 🦛 🐑 🐐 🦌 🐕 🐈 🐓 🦃 🕊️ 🌹 🌸 🌺 🌻 🌼 🌷 🌱 🌿 🍀 🍁 🍂 🍃"),
+            ["food"] = new("Food & Drink", "🍕", "🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🫓 🥨 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍖 🌭 🍔 🍟 🍕 🥪 🥙 🧆 🌮 🌯 🥗 🥘 🥫 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🦪 🍤 🍚 🍙 🍘 🍥 🥠 🍦 🍧 🍨 🍩 🍪 🎂 🍰 🧁 🍫 🍬 🍭 ☕ 🍵 🧋 🥤 🧃 🥛 🍺 🍻 🍷 🥂 🍸 🍹"),
+            ["travel"] = new("Travel & Places", "✈️", "🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🛵 🏍️ 🚲 🛴 🚏 🛣️ ⛽ 🚦 🚧 ⚓ ⛵ 🚤 🛳️ 🚢 ✈️ 🛫 🛬 🪂 🚁 🚀 🛸 🛰️ 🗺️ 🗿 🗽 🗼 🏰 🏯 🏟️ 🎡 🎢 🎠 ⛱️ 🏖️ 🏝️ 🏜️ 🌋 ⛰️ 🏕️ ⛺ 🏠 🏡 🏢 🏥 🏦 🏨 🏪 🏫 🏛️ ⛪ 🕌 🛕"),
+            ["activities"] = new("Activities", "⚽", "⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🪀 🪁 🏓 🏸 🏒 🏑 🥍 🏏 ⛳ 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛷 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤼 🤸 ⛹️ 🤾 🧘 🏄 🏊 🤽 🚣 🧗 🚵 🧚 🦸 🦹 🧙 🧝 🧛 🧟 🧞 🧜 🧑‍🚀 🎮 🕹️ 🎲 ♟️ 🎯 🎳 🎨 🎭 🎪 🎤 🎧 🎼 🎹 🥁 🎷 🎺 🎸 🎻"),
+            ["objects"] = new("Objects", "💡", "💡 🔦 🕯️ 🪔 📱 💻 ⌨️ 🖥️ 🖨️ 🖱️ 💾 💿 📷 📸 📹 🎥 ☎️ 📞 📺 📻 ⏰ ⌚ 🔋 🔌 🔑 🔒 🔓 🧰 🔨 ⚒️ 🛠️ 🧲 🧪 🔬 🔭 💊 💉 📚 📖 📝 ✏️ 🖊️ 📌 📍 ✂️ 🗑️ 🔔 🎁 🎈 🎀 🧸 🛍️ 💎 💰 💳 🧿"),
+            ["symbols"] = new("Symbols", "❤️", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❤️‍🔥 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ☮️ ✝️ ☪️ 🕉️ ☯️ ☢️ ☣️ ⚠️ ❗ ❓ ❕ ❔ ‼️ ⁉️ 💯 🔥 ✨ ⭐ 🌟 💫 💥 💦 💨 💤 🎵 🎶 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 ⬆️ ↗️ ➡️ ↘️ ⬇️ ↙️ ⬅️ ↖️ 🔄 🔃 ✔️ ❌ ➕ ➖ ✖️ ➗ ♾️"),
+            ["flags"] = new("Flags", "🏳️", "🏳️ 🏴 🏁 🚩 🏳️‍🌈 🏳️‍⚧️ 🇮🇳 🇺🇸 🇬🇧 🇨🇦 🇦🇺 🇯🇵 🇰🇷 🇩🇪 🇫🇷 🇮🇹 🇪🇸 🇧🇷 🇲🇽 🇦🇪 🇸🇬 🇮🇩 🇳🇵 🇵🇰 🇧🇩 🇱🇰 🇳🇿 🇿🇦 🇷🇺 🇨🇳 🇹🇭 🇻🇳 🇵🇭 🇲🇾 🇸🇦 🇶🇦 🇹🇷 🇳🇱 🇸🇪 🇳🇴 🇩🇰 🇫🇮 🇵🇱 🇺🇦")
+        };
+
+    private sealed record EmojiCategory(string Name, string Icon, string Values);
 
 
     // ============================================================
@@ -2608,10 +2689,61 @@ else
     {
         openMenuMessageId = null;
 
-        reactionPickerMessageId =
-            reactionPickerMessageId == messageId
-                ? null
-                : messageId;
+        if (reactionPickerMessageId == messageId)
+        {
+            reactionPickerMessageId = null;
+            emojiBrowserMessageId = null;
+            emojiSearch = string.Empty;
+            return;
+        }
+
+        reactionPickerMessageId = messageId;
+        emojiBrowserMessageId = null;
+        emojiSearch = string.Empty;
+        emojiCategory = "smileys";
+    }
+
+
+    private void ToggleEmojiBrowser(long messageId)
+    {
+        if (emojiBrowserMessageId == messageId)
+        {
+            CloseEmojiBrowser();
+            return;
+        }
+
+        emojiBrowserMessageId = messageId;
+        emojiSearch = string.Empty;
+        emojiCategory = "smileys";
+    }
+
+
+    private void CloseEmojiBrowser()
+    {
+        emojiBrowserMessageId = null;
+        emojiSearch = string.Empty;
+    }
+
+
+    private void SelectEmojiCategory(string category)
+    {
+        emojiCategory = category;
+        emojiSearch = string.Empty;
+    }
+
+
+    private IEnumerable<string> GetFilteredEmojis()
+    {
+        if (!EmojiCategories.TryGetValue(emojiCategory, out var category))
+        {
+            return Enumerable.Empty<string>();
+        }
+
+        var emojis = category.Values.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return emojis;
     }
 
 
@@ -2636,6 +2768,8 @@ else
                 reaction);
 
             reactionPickerMessageId = null;
+            emojiBrowserMessageId = null;
+            emojiSearch = string.Empty;
         }
         catch (Exception ex)
         {
@@ -2886,6 +3020,11 @@ else
     private async Task HandleKeyDown(
         KeyboardEventArgs e)
     {
+        if (e.Repeat)
+        {
+            return;
+        }
+
         if (e.Key == "Enter" &&
             !e.ShiftKey)
         {
@@ -2995,7 +3134,11 @@ else
         var replyId =
             replyingTo?.Id;
 
+        // Clear the composer immediately so the UI feels responsive
+        // even when the SignalR round-trip takes a moment.
         draft = string.Empty;
+
+        await InvokeAsync(StateHasChanged);
 
         try
         {
