@@ -1273,7 +1273,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                     selectedMessage is not null)
+                             selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1388,6 +1388,10 @@ else
     // ============================================================
 
     private string QueryName { get; set; } = string.Empty;
+
+    private bool notificationOpen;
+
+    private bool notificationAutoJoinAttempted;
 
 
     // ============================================================
@@ -1616,6 +1620,14 @@ else
 
 
     // ============================================================
+    // STORED PARTICIPANT IDENTITY
+    // ============================================================
+
+    private string SavedNameStorageKey =>
+        $"chatapp:name:{RoomCode}";
+
+
+    // ============================================================
     // INITIAL
     // ============================================================
 
@@ -1780,6 +1792,19 @@ else
                     queryName.ToString();
             }
 
+            notificationOpen =
+                query.TryGetValue(
+                    "notification",
+                    out var notificationValue) &&
+                (string.Equals(
+                    notificationValue.ToString(),
+                    "1",
+                    StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(
+                    notificationValue.ToString(),
+                    "true",
+                    StringComparison.OrdinalIgnoreCase));
+
             publicOrigin =
                 uri.GetLeftPart(
                     UriPartial.Authority);
@@ -1832,7 +1857,10 @@ else
         }
         finally
         {
-            isInitializing = false;
+            // Normal invite links should immediately show the name screen.
+            // Notification opens remain in loading state until the saved
+            // room-specific identity has been restored in OnAfterRenderAsync.
+            isInitializing = notificationOpen;
         }
     }
 
@@ -1893,6 +1921,8 @@ else
                 return;
             }
 
+            await SaveCurrentNameAsync();
+
             hasJoined = true;
 
             await InvokeAsync(
@@ -1910,6 +1940,108 @@ else
         finally
         {
             isJoining = false;
+        }
+    }
+
+
+    // ============================================================
+    // STORED IDENTITY HELPERS
+    // ============================================================
+
+    private async Task SaveCurrentNameAsync()
+    {
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(RoomCode))
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "localStorage.setItem",
+                SavedNameStorageKey,
+                name);
+        }
+        catch
+        {
+            // Local storage is a convenience for notification routing.
+            // Chat functionality must continue if storage is unavailable.
+        }
+    }
+
+
+    private async Task<string?> GetSavedNameAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RoomCode))
+        {
+            return null;
+        }
+
+        try
+        {
+            return await JS.InvokeAsync<string?>(
+                "localStorage.getItem",
+                SavedNameStorageKey);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+    private async Task RestoreNotificationIdentityAsync()
+    {
+        if (!notificationOpen ||
+            notificationAutoJoinAttempted ||
+            hasJoined)
+        {
+            return;
+        }
+
+        notificationAutoJoinAttempted = true;
+
+        try
+        {
+            var savedName =
+                (await GetSavedNameAsync())?.Trim();
+
+            if (string.IsNullOrWhiteSpace(savedName))
+            {
+                isInitializing = false;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (savedName.Length > 40)
+            {
+                savedName = savedName[..40];
+            }
+
+            if (savedName.Length < 2)
+            {
+                isInitializing = false;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            name = savedName;
+            joinName = savedName;
+            hasJoined = true;
+
+            await InitializeChatAsync();
+        }
+        catch
+        {
+            hasJoined = false;
+            joinError =
+                "Your saved chat identity could not be restored. Please enter your name to continue.";
+        }
+        finally
+        {
+            isInitializing = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -2023,7 +2155,34 @@ else
             new HubConnectionBuilder()
                 .WithUrl(
                     Navigation.ToAbsoluteUri(
-                        "/chathub"))
+                        "/chathub"),
+                    options =>
+                    {
+#if DEBUG
+                        // Local development uses the ASP.NET Core
+                        // development HTTPS certificate. The browser
+                        // trusts it, but the server-side SignalR client
+                        // may not. Keep this bypass DEBUG-only.
+                        options.HttpMessageHandlerFactory =
+                            innerHandler =>
+                            {
+                                if (innerHandler is HttpClientHandler httpClientHandler)
+                                {
+                                    httpClientHandler.ServerCertificateCustomValidationCallback =
+                                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                                }
+
+                                return innerHandler;
+                            };
+
+                        options.WebSocketConfiguration =
+                            webSocketOptions =>
+                            {
+                                webSocketOptions.RemoteCertificateValidationCallback =
+                                    (_, _, _, _) => true;
+                            };
+#endif
+                    })
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -2516,12 +2675,42 @@ else
         // START
         // --------------------------------------------------------
 
-        await hub.StartAsync();
+        try
+        {
+            await hub.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            connected = false;
+            error =
+                $"Unable to connect to chat server: {ex.Message}";
 
-        await hub.InvokeAsync(
-            "JoinRoom",
-            RoomCode,
-            name);
+            Console.WriteLine(
+                $"[ChatApp] SignalR StartAsync failed: {ex}");
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            await hub.InvokeAsync(
+                "JoinRoom",
+                RoomCode,
+                name);
+        }
+        catch (Exception ex)
+        {
+            connected = false;
+            error =
+                $"Unable to join chat room: {ex.Message}";
+
+            Console.WriteLine(
+                $"[ChatApp] SignalR JoinRoom failed: {ex}");
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
 
         connected = true;
 
@@ -3727,6 +3916,18 @@ else
             }
             catch
             {
+            }
+
+            if (hasJoined && !string.IsNullOrWhiteSpace(name))
+            {
+                await SaveCurrentNameAsync();
+            }
+
+            // A notification click is explicitly marked by the service worker.
+            // Restore only the identity previously used in this room.
+            if (notificationOpen)
+            {
+                await RestoreNotificationIdentityAsync();
             }
         }
 

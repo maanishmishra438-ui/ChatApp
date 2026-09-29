@@ -1,226 +1,141 @@
-// ================================================================
-// CHATAPP SERVICE WORKER
-// ================================================================
+// Service Worker for ChatApp
+// Handles browser push notifications and notification click routing.
 
-
-// ================================================================
-// PUSH EVENT
-// ================================================================
-
-self.addEventListener("push", event => {
-
+self.addEventListener("push", (event) => {
     if (!event.data) {
         return;
     }
 
-
-    let data;
+    let data = {};
 
     try {
-        data =
-            event.data.json();
-    }
-    catch {
+        data = event.data.json();
+    } catch {
         data = {
-            title: "ChatApp",
+            title: "New message",
             body: event.data.text()
         };
     }
 
+    const notificationData = data.data || {};
 
-    const title =
-        data.title || "ChatApp";
-
+    const title = data.title || "ChatApp";
 
     const options = {
-
-        body:
-            data.body ||
-            "You have a new message.",
-
-        icon:
-            "/icon-192.png",
-
-        badge:
-            "/icon-192.png",
-
-        data:
-            data.data || {},
-
-        actions:
-            data.actions || [],
-
-        requireInteraction:
-            false
+        body: data.body || "You have a new message.",
+        icon: data.icon || "/icon-192.png",
+        badge: data.badge || "/icon-192.png",
+        data: notificationData,
+        actions: data.actions || [
+            {
+                action: "open",
+                title: "Open"
+            },
+            {
+                action: "like",
+                title: "Like"
+            }
+        ]
     };
 
-
     event.waitUntil(
-        self.registration.showNotification(
-            title,
-            options
-        )
+        self.registration.showNotification(title, options)
     );
 });
 
 
-// ================================================================
-// NOTIFICATION CLICK
-// ================================================================
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
 
-self.addEventListener(
-    "notificationclick",
-    event => {
-
-        const action =
-            event.action;
-
-        const notification =
-            event.notification;
-
-        const data =
-            notification.data || {};
+    const data = event.notification.data || {};
+    const action = event.action || "open";
 
 
-        notification.close();
+    // ---------------------------------------------
+    // LIKE ACTION
+    // ---------------------------------------------
+    if (action === "like") {
+        event.waitUntil(
+            fetch("/api/notifications/like", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    roomCode: data.roomCode,
+                    messageId: data.messageId,
+                    userName: data.userName
+                })
+            }).catch(() => {
+                // Notification actions must never break
+                // the service worker.
+            })
+        );
+
+        return;
+    }
 
 
-        // ========================================================
-        // LIKE BUTTON
-        // ========================================================
+    // ---------------------------------------------
+    // OPEN CHAT ACTION
+    // ---------------------------------------------
+    if (!data.roomCode) {
+        return;
+    }
 
-        if (action === "like") {
 
-            if (!data.roomCode ||
-                !data.messageId ||
-                !data.userName) {
+    // This marker tells Chat.razor that the navigation
+    // came from a push notification.
+    //
+    // Normal invite URLs such as:
+    // /chat/ABC123
+    //
+    // remain unchanged and will still ask for the name.
+    const chatUrl =
+        "/chat/" +
+        encodeURIComponent(data.roomCode) +
+        "?notification=1";
 
-                return;
+
+    event.waitUntil(
+        clients.matchAll({
+            type: "window",
+            includeUncontrolled: true
+        }).then((windowClients) => {
+
+            // Try to reuse an already-open ChatApp tab.
+            for (const client of windowClients) {
+
+                if (
+                    client.url.includes("/chat/") &&
+                    "focus" in client
+                ) {
+                    return client
+                        .navigate(chatUrl)
+                        .then(() => client.focus());
+                }
             }
 
 
-            event.waitUntil(
+            // No existing ChatApp window.
+            // Open a new one.
+            if (clients.openWindow) {
+                return clients.openWindow(chatUrl);
+            }
 
-                fetch(
-                    "/api/notifications/like",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-                                roomCode:
-                                    data.roomCode,
-
-                                messageId:
-                                    data.messageId,
-
-                                userName:
-                                    data.userName
-                            })
-                    }
-                )
-                    .catch(() => {
-                        // Ignore notification action failure.
-                    })
-            );
-
-            return;
-        }
+            return undefined;
+        })
+    );
+});
 
 
-        // ========================================================
-        // OPEN CHAT
-        // ========================================================
-
-        if (!data.roomCode) {
-            return;
-        }
+self.addEventListener("install", () => {
+    self.skipWaiting();
+});
 
 
-        const chatUrl =
-            "/chat/" +
-            encodeURIComponent(
-                data.roomCode
-            );
-
-
-        event.waitUntil(
-
-            clients
-                .matchAll({
-                    type: "window",
-                    includeUncontrolled: true
-                })
-                .then(clientList => {
-
-                    // Try to reuse an existing ChatApp tab.
-                    for (const client of clientList) {
-
-                        if (
-                            "focus" in client &&
-                            client.url.includes("/chat/")
-                        ) {
-
-                            if (
-                                "navigate" in client
-                            ) {
-                                client.navigate(
-                                    chatUrl
-                                );
-                            }
-
-                            return client.focus();
-                        }
-                    }
-
-
-                    // No existing tab.
-                    if (
-                        clients.openWindow
-                    ) {
-                        return clients.openWindow(
-                            chatUrl
-                        );
-                    }
-
-
-                    return undefined;
-                })
-        );
-    }
-);
-
-
-// ================================================================
-// SERVICE WORKER INSTALL
-// ================================================================
-
-self.addEventListener(
-    "install",
-    event => {
-
-        self.skipWaiting();
-
-    }
-);
-
-
-// ================================================================
-// SERVICE WORKER ACTIVATE
-// ================================================================
-
-self.addEventListener(
-    "activate",
-    event => {
-
-        event.waitUntil(
-            self.clients.claim()
-        );
-
-    }
-);
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        clients.claim()
+    );
+});
