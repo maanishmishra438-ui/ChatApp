@@ -1273,7 +1273,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                                 selectedMessage is not null)
+                                     selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -3885,6 +3885,22 @@ else
             catch
             {
                 pushModule = null;
+            }
+
+            // Restore notification state from the browser's actual
+            // Push subscription after every page load/refresh.
+            try
+            {
+                if (pushModule is not null)
+                {
+                    notificationsEnabled =
+                        await pushModule.InvokeAsync<bool>(
+                            "isNotificationsEnabled");
+                }
+            }
+            catch
+            {
+                notificationsEnabled = false;
             }
 
             // Register this ChatApp tab with the service worker

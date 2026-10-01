@@ -8,6 +8,7 @@
 // - VAPID subscription
 // - ChatApp browser-tab tracking
 // - Exact notification tab routing
+// - Notification state checking after page refresh
 //
 // UI is not touched here.
 // ================================================================
@@ -192,30 +193,36 @@ export async function enable(
                 "========== PUSH SUBSCRIBE ERROR =========="
             );
 
+
             console.error(
                 "Error object:",
                 error
             );
+
 
             console.error(
                 "Name:",
                 error?.name
             );
 
+
             console.error(
                 "Message:",
                 error?.message
             );
+
 
             console.error(
                 "Code:",
                 error?.code
             );
 
+
             console.error(
                 "Stack:",
                 error?.stack
             );
+
 
             console.error(
                 "=========================================="
@@ -317,6 +324,122 @@ export async function enable(
 
 
 // ================================================================
+// CHECK CURRENT NOTIFICATION STATE
+// ================================================================
+//
+// Used by Chat.razor after page load / refresh.
+//
+// This function DOES NOT create a new subscription.
+// It only checks:
+//
+// 1. Notification permission is granted
+// 2. Service Worker is available
+// 3. Push API is available
+// 4. An existing Push subscription is present
+//
+// Returns:
+//     true  -> notifications are currently enabled
+//     false -> notifications are not currently enabled
+// ================================================================
+
+export async function isNotificationsEnabled() {
+
+    try {
+
+        // --------------------------------------------------------
+        // Notification API support
+        // --------------------------------------------------------
+
+        if (
+            !("Notification" in window)
+        ) {
+
+            return false;
+        }
+
+
+        // --------------------------------------------------------
+        // Service Worker support
+        // --------------------------------------------------------
+
+        if (
+            !("serviceWorker" in navigator)
+        ) {
+
+            return false;
+        }
+
+
+        // --------------------------------------------------------
+        // Push API support
+        // --------------------------------------------------------
+
+        if (
+            !("PushManager" in window)
+        ) {
+
+            return false;
+        }
+
+
+        // --------------------------------------------------------
+        // Browser permission
+        // --------------------------------------------------------
+
+        if (
+            Notification.permission !==
+            "granted"
+        ) {
+
+            return false;
+        }
+
+
+        // --------------------------------------------------------
+        // Get current service worker
+        // --------------------------------------------------------
+
+        const registration =
+            await navigator.serviceWorker.ready;
+
+
+        if (!registration) {
+
+            return false;
+        }
+
+
+        // --------------------------------------------------------
+        // Check existing push subscription
+        // --------------------------------------------------------
+
+        const subscription =
+            await registration
+                .pushManager
+                .getSubscription();
+
+
+        // --------------------------------------------------------
+        // Subscription exists
+        // --------------------------------------------------------
+
+        return subscription !== null;
+
+    }
+    catch (error) {
+
+        console.warn(
+            "Unable to check current notification state:",
+            error
+        );
+
+
+        return false;
+    }
+}
+
+
+// ================================================================
 // REGISTER CURRENT CHAT TAB
 // ================================================================
 //
@@ -385,6 +508,7 @@ export async function registerChatTab(
             "ChatApp tab registration failed:",
             error
         );
+
 
         return false;
     }
