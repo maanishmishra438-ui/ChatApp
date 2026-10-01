@@ -1273,7 +1273,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                             selectedMessage is not null)
+                                 selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -3887,6 +3887,21 @@ else
                 pushModule = null;
             }
 
+            // Register this ChatApp tab with the service worker
+            // so notification clicks can target the exact room tab.
+            try
+            {
+                if (pushModule is not null)
+                {
+                    await pushModule.InvokeVoidAsync(
+                        "registerChatTab",
+                        RoomCode);
+                }
+            }
+            catch
+            {
+            }
+
             // Get actual browser origin.
             try
             {
@@ -4063,6 +4078,23 @@ else
         try
         {
             dotNetReference?.Dispose();
+        }
+        catch
+        {
+        }
+
+
+        // --------------------------------------------------------
+        // UNREGISTER CHAT TAB FROM SERVICE WORKER
+        // --------------------------------------------------------
+
+        try
+        {
+            if (pushModule is not null)
+            {
+                await pushModule.InvokeVoidAsync(
+                    "unregisterChatTab");
+            }
         }
         catch
         {
