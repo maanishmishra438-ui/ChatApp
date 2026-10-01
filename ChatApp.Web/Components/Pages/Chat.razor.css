@@ -1,4 +1,4 @@
-/* ============================================================
+ï»¿/* ============================================================
    CHATAPP
    PREMIUM DARK PRIVATE CHAT UI
    DESKTOP + TABLET + MOBILE
@@ -5802,7 +5802,7 @@ a:focus-visible {
 
 
 /* ================================================================
-   FINAL MOBILE OVERRIDE — ChatApp
+   FINAL MOBILE OVERRIDE â€” ChatApp
    This block intentionally comes last so it wins over older
    mobile rules in this stylesheet.
    ================================================================ */
@@ -6299,7 +6299,7 @@ a:focus-visible {
 }
 
 /* ================================================================
-   EMOJI BROWSER — PROFESSIONAL MOBILE/WEB OVERRIDE
+   EMOJI BROWSER â€” PROFESSIONAL MOBILE/WEB OVERRIDE
    ================================================================ */
 
 .reaction-quick-row {
@@ -6571,7 +6571,7 @@ a:focus-visible {
 
 
 /* ================================================================
-   COMPOSER EMOJI PICKER — CLEAN DESKTOP EXPERIENCE
+   COMPOSER EMOJI PICKER â€” CLEAN DESKTOP EXPERIENCE
    Mobile intentionally uses the native device keyboard.
    ================================================================ */
 
@@ -6867,7 +6867,7 @@ a:focus-visible {
 
 
 /* ================================================================
-   MOBILE COMPOSER / KEYBOARD UX — FINAL
+   MOBILE COMPOSER / KEYBOARD UX â€” FINAL
    Desktop/web styles are intentionally untouched.
    ================================================================ */
 
@@ -7060,5 +7060,829 @@ a:focus-visible {
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
+    }
+}
+
+/* ================================================================
+   CHATAPP â€” JOIN PRIVATE CHAT
+   PREMIUM HOME-STYLE GLASS UI
+   BLUE FLOATING BUTTERFLIES
+   UI ONLY â€” NO FUNCTIONALITY CHANGES
+   ================================================================ */
+
+
+/* ================================================================
+   JOIN PAGE
+   ================================================================ */
+
+.join-screen {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 40px 24px;
+    isolation: isolate;
+    background: radial-gradient( circle at 12% 18%, rgba(54, 91, 255, 0.17), transparent 29% ), radial-gradient( circle at 88% 15%, rgba(85, 70, 255, 0.16), transparent 28% ), radial-gradient( circle at 50% 100%, rgba(35, 92, 255, 0.10), transparent 35% ), linear-gradient( 135deg, #050711 0%, #080b17 48%, #050611 100% );
+}
+
+
+    /* ================================================================
+   SOFT BLUE AMBIENT GLOW
+   ================================================================ */
+
+    .join-screen::before {
+        content: "";
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        top: -220px;
+        right: -180px;
+        border-radius: 50%;
+        background: radial-gradient( circle, rgba(65, 104, 255, 0.24), rgba(62, 91, 255, 0.07) 42%, transparent 72% );
+        filter: blur(12px);
+        pointer-events: none;
+        z-index: -5;
+        animation: joinGlowTop 11s ease-in-out infinite alternate;
+    }
+
+
+    .join-screen::after {
+        content: "";
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        bottom: -360px;
+        left: -280px;
+        border-radius: 50%;
+        background: radial-gradient( circle, rgba(68, 51, 255, 0.22), rgba(56, 77, 255, 0.05) 43%, transparent 72% );
+        filter: blur(14px);
+        pointer-events: none;
+        z-index: -5;
+        animation: joinGlowBottom 13s ease-in-out infinite alternate;
+    }
+
+
+@keyframes joinGlowTop {
+
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: .55;
+    }
+
+    100% {
+        transform: translate3d(-35px, 30px, 0) scale(1.12);
+        opacity: .90;
+    }
+}
+
+
+@keyframes joinGlowBottom {
+
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: .45;
+    }
+
+    100% {
+        transform: translate3d(35px, -30px, 0) scale(1.10);
+        opacity: .78;
+    }
+}
+
+
+/* ================================================================
+   MANY TINY BLUE BUTTERFLIES
+   ---------------------------------------------------------------
+   Pure CSS.
+   No emoji.
+   No extra HTML.
+   No Unicode.
+   ================================================================ */
+
+
+/* Main butterfly generator */
+
+.join-card::before {
+    content: "";
+    position: fixed;
+    width: 12px;
+    height: 9px;
+    left: 50%;
+    top: 50%;
+    z-index: -2;
+    pointer-events: none;
+    opacity: .72;
+    /*
+       Butterfly:
+       left wing + right wing + small body
+    */
+
+    background: radial-gradient( ellipse at 22% 50%, rgba(72, 143, 255, .95) 0%, rgba(55, 111, 255, .62) 48%, transparent 72% ), radial-gradient( ellipse at 78% 50%, rgba(93, 129, 255, .95) 0%, rgba(72, 85, 255, .58) 48%, transparent 72% ), linear-gradient( 90deg, transparent 44%, rgba(174, 201, 255, .90) 47%, rgba(174, 201, 255, .90) 53%, transparent 56% );
+    filter: drop-shadow( 0 0 5px rgba(67, 128, 255, .80) ) drop-shadow( 0 0 12px rgba(66, 88, 255, .30) );
+    transform: translate(-50%, -50%) rotate(-8deg);
+    animation: butterflyFloatA 9s ease-in-out infinite;
+}
+
+
+/*
+   Additional butterflies.
+   These use the same CSS butterfly through multiple
+   layered shadows/gradients.
+*/
+
+.join-card::after {
+    content: "";
+    position: fixed;
+    width: 10px;
+    height: 8px;
+    left: 50%;
+    top: 50%;
+    z-index: -2;
+    pointer-events: none;
+    opacity: .55;
+    background: radial-gradient( ellipse at 22% 50%, rgba(46, 130, 255, .95) 0%, rgba(39, 98, 255, .58) 48%, transparent 72% ), radial-gradient( ellipse at 78% 50%, rgba(99, 145, 255, .95) 0%, rgba(75, 83, 255, .55) 48%, transparent 72% ), linear-gradient( 90deg, transparent 43%, rgba(182, 210, 255, .85) 47%, rgba(182, 210, 255, .85) 53%, transparent 57% );
+    filter: drop-shadow( 0 0 5px rgba(55, 131, 255, .85) );
+    transform: translate(-50%, -50%) rotate(10deg);
+    animation: butterflyFloatB 11s ease-in-out infinite;
+}
+
+
+/* ================================================================
+   BUTTERFLY A
+   ================================================================ */
+
+@keyframes butterflyFloatA {
+
+    0% {
+        left: 8%;
+        top: 24%;
+        transform: translate(-50%, -50%) rotate(-12deg) scale(.8);
+        opacity: .18;
+    }
+
+    15% {
+        left: 16%;
+        top: 18%;
+        opacity: .52;
+    }
+
+    30% {
+        left: 24%;
+        top: 28%;
+        transform: translate(-50%, -50%) rotate(9deg) scale(1);
+    }
+
+    45% {
+        left: 37%;
+        top: 17%;
+        opacity: .68;
+    }
+
+    60% {
+        left: 49%;
+        top: 29%;
+        transform: translate(-50%, -50%) rotate(-7deg) scale(.82);
+    }
+
+    75% {
+        left: 65%;
+        top: 19%;
+        opacity: .50;
+    }
+
+    90% {
+        left: 81%;
+        top: 31%;
+        transform: translate(-50%, -50%) rotate(8deg) scale(.72);
+    }
+
+    100% {
+        left: 94%;
+        top: 20%;
+        opacity: .08;
+    }
+}
+
+
+/* ================================================================
+   BUTTERFLY B
+   ================================================================ */
+
+@keyframes butterflyFloatB {
+
+    0% {
+        left: 94%;
+        top: 72%;
+        transform: translate(-50%, -50%) rotate(12deg) scale(.7);
+        opacity: .10;
+    }
+
+    18% {
+        left: 82%;
+        top: 82%;
+        opacity: .45;
+    }
+
+    35% {
+        left: 70%;
+        top: 67%;
+        transform: translate(-50%, -50%) rotate(-9deg) scale(1);
+    }
+
+    52% {
+        left: 57%;
+        top: 80%;
+        opacity: .62;
+    }
+
+    70% {
+        left: 42%;
+        top: 68%;
+        transform: translate(-50%, -50%) rotate(7deg) scale(.82);
+    }
+
+    85% {
+        left: 23%;
+        top: 79%;
+        opacity: .38;
+    }
+
+    100% {
+        left: 7%;
+        top: 66%;
+        opacity: .08;
+    }
+}
+
+
+/* ================================================================
+   EXTRA BLUE PARTICLES
+   ================================================================ */
+
+.join-screen {
+    background-image: radial-gradient( circle at 7% 11%, rgba(82, 140, 255, .65) 0 1px, transparent 2px ), radial-gradient( circle at 17% 74%, rgba(74, 122, 255, .50) 0 1px, transparent 2px ), radial-gradient( circle at 27% 34%, rgba(102, 143, 255, .42) 0 1px, transparent 2px ), radial-gradient( circle at 38% 13%, rgba(84, 131, 255, .52) 0 1px, transparent 2px ), radial-gradient( circle at 47% 86%, rgba(82, 114, 255, .44) 0 1px, transparent 2px ), radial-gradient( circle at 59% 21%, rgba(113, 147, 255, .55) 0 1px, transparent 2px ), radial-gradient( circle at 69% 78%, rgba(79, 120, 255, .52) 0 1px, transparent 2px ), radial-gradient( circle at 79% 37%, rgba(93, 133, 255, .50) 0 1px, transparent 2px ), radial-gradient( circle at 91% 63%, rgba(72, 115, 255, .45) 0 1px, transparent 2px ), radial-gradient( circle at 87% 10%, rgba(112, 140, 255, .42) 0 1px, transparent 2px ), radial-gradient( circle at 12% 48%, rgba(74, 133, 255, .42) 0 1px, transparent 2px ), radial-gradient( circle at 74% 52%, rgba(82, 111, 255, .40) 0 1px, transparent 2px ), radial-gradient( circle at 32% 91%, rgba(91, 136, 255, .38) 0 1px, transparent 2px ), radial-gradient( circle at 95% 86%, rgba(79, 120, 255, .42) 0 1px, transparent 2px ), radial-gradient( circle at 4% 90%, rgba(75, 122, 255, .35) 0 1px, transparent 2px ), radial-gradient( circle at 52% 8%, rgba(92, 132, 255, .38) 0 1px, transparent 2px ), radial-gradient( circle at 62% 93%, rgba(80, 121, 255, .38) 0 1px, transparent 2px ), radial-gradient( circle at 22% 12%, rgba(100, 143, 255, .35) 0 1px, transparent 2px ), radial-gradient( circle at 84% 91%, rgba(86, 125, 255, .34) 0 1px, transparent 2px ), radial-gradient( circle at 44% 51%, rgba(100, 135, 255, .22) 0 1px, transparent 2px ), radial-gradient( circle at 58% 58%, rgba(105, 143, 255, .20) 0 1px, transparent 2px ), radial-gradient( circle at 15% 89%, rgba(74, 123, 255, .30) 0 1px, transparent 2px ), radial-gradient( circle at 96% 26%, rgba(91, 136, 255, .30) 0 1px, transparent 2px ), radial-gradient( circle at 35% 20%, rgba(91, 132, 255, .26) 0 1px, transparent 2px ), radial-gradient( circle at 71% 13%, rgba(80, 125, 255, .30) 0 1px, transparent 2px ), radial-gradient( circle at 3% 31%, rgba(81, 129, 255, .30) 0 1px, transparent 2px ), radial-gradient( circle at 90% 48%, rgba(85, 126, 255, .28) 0 1px, transparent 2px ), radial-gradient( circle at 31% 69%, rgba(76, 120, 255, .26) 0 1px, transparent 2px ), radial-gradient( circle at 67% 91%, rgba(76, 120, 255, .27) 0 1px, transparent 2px ), radial-gradient( circle at 97% 74%, rgba(85, 130, 255, .28) 0 1px, transparent 2px ), radial-gradient( circle at 6% 64%, rgba(82, 128, 255, .25) 0 1px, transparent 2px ), radial-gradient( circle at 77% 93%, rgba(92, 134, 255, .25) 0 1px, transparent 2px ), radial-gradient( circle at 53% 40%, rgba(98, 136, 255, .18) 0 1px, transparent 2px ), radial-gradient( circle at 24% 55%, rgba(91, 129, 255, .22) 0 1px, transparent 2px ), radial-gradient( circle at 82% 56%, rgba(92, 131, 255, .20) 0 1px, transparent 2px ), radial-gradient( circle at 46% 95%, rgba(87, 126, 255, .25) 0 1px, transparent 2px ), radial-gradient( circle at 56% 4%, rgba(87, 127, 255, .24) 0 1px, transparent 2px ), radial-gradient( circle at 19% 37%, rgba(89, 129, 255, .22) 0 1px, transparent 2px ), radial-gradient( circle at 93% 39%, rgba(92, 130, 255, .22) 0 1px, transparent 2px ), radial-gradient( circle at 39% 77%, rgba(84, 126, 255, .20) 0 1px, transparent 2px ), radial-gradient( circle at 63% 32%, rgba(83, 125, 255, .21) 0 1px, transparent 2px ), radial-gradient( circle at 11% 78%, rgba(88, 130, 255, .22) 0 1px, transparent 2px ), radial-gradient( circle at 88% 82%, rgba(84, 126, 255, .20) 0 1px, transparent 2px );
+}
+
+
+/* ================================================================
+   GLASS LOGIN PANEL
+   ================================================================ */
+
+.join-card {
+    width: min(470px, 100%);
+    position: relative;
+    z-index: 10;
+    padding: 42px 40px 30px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, .105);
+    background: linear-gradient( 145deg, rgba(21, 28, 48, .70), rgba(8, 12, 24, .78) );
+    backdrop-filter: blur(28px) saturate(135%);
+    -webkit-backdrop-filter: blur(28px) saturate(135%);
+    box-shadow: 0 45px 110px rgba(0, 0, 0, .58), 0 0 80px rgba(56, 85, 255, .07), inset 0 1px 0 rgba(255, 255, 255, .07), inset 0 -1px 0 rgba(0, 0, 0, .20);
+    overflow: hidden;
+    animation: joinPanelIn .65s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+
+    /* glass top shine */
+
+    .join-card > * {
+        position: relative;
+        z-index: 3;
+    }
+
+
+.join-card {
+    isolation: isolate;
+}
+
+
+.join-card {
+    background: radial-gradient( circle at 50% -30%, rgba(108, 137, 255, .12), transparent 43% ), linear-gradient( 145deg, rgba(21, 28, 48, .72), rgba(8, 12, 24, .82) );
+}
+
+
+@keyframes joinPanelIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(22px) scale(.965);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* ================================================================
+   BRAND
+   ================================================================ */
+
+.join-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+
+.join-brand-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: linear-gradient( 135deg, #426eea, #7356ef );
+    border: 1px solid rgba(255, 255, 255, .10);
+    box-shadow: 0 10px 28px rgba(63, 95, 235, .30), inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+
+.join-brand-name {
+    color: #f5f7ff;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.6px;
+}
+
+
+    .join-brand-name span {
+        color: #82a8ff;
+    }
+
+
+/* ================================================================
+   PRIVATE ROOM BADGE
+   ================================================================ */
+
+.room-badge {
+    width: fit-content;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(93, 133, 255, .14);
+    background: rgba(75, 105, 255, .08);
+    color: #94a4c2;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+
+.room-badge-dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+    background: #65e5a2;
+    box-shadow: 0 0 0 3px rgba(101, 229, 162, .07), 0 0 13px rgba(101, 229, 162, .65);
+}
+
+
+/* ================================================================
+   HERO LOCK ICON
+   ================================================================ */
+
+.join-hero-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 23px;
+    border: 1px solid rgba(108, 139, 255, .25);
+    background: radial-gradient( circle at 30% 20%, rgba(117, 151, 255, .30), transparent 55% ), linear-gradient( 145deg, rgba(50, 78, 158, .96), rgba(25, 36, 79, .98) );
+    box-shadow: 0 20px 45px rgba(37, 64, 157, .30), 0 0 40px rgba(64, 92, 255, .10), inset 0 1px 0 rgba(255, 255, 255, .11);
+}
+
+
+.join-hero-icon-inner {
+    font-size: 29px;
+    line-height: 1;
+    filter: drop-shadow( 0 5px 10px rgba(0, 0, 0, .30) );
+}
+
+
+/* ================================================================
+   TITLE
+   ================================================================ */
+
+.join-card h1 {
+    margin: 0;
+    text-align: center;
+    color: #f6f8ff;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -1px;
+}
+
+
+/* ================================================================
+   DESCRIPTION
+   ================================================================ */
+
+.join-description {
+    max-width: 365px;
+    margin: 14px auto 30px;
+    text-align: center;
+    color: #8997b2;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+
+/* ================================================================
+   LABEL
+   ================================================================ */
+
+.join-form label {
+    display: block;
+    margin-bottom: 9px;
+    color: #b9c5da;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* ================================================================
+   INPUT
+   ================================================================ */
+
+.name-input-wrapper {
+    width: 100%;
+    position: relative;
+}
+
+
+    .name-input-wrapper input {
+        width: 100%;
+        height: 55px;
+        padding: 0 48px;
+        border: 1px solid rgba(255, 255, 255, .10);
+        border-radius: 15px;
+        outline: none;
+        background: rgba(7, 12, 25, .55);
+        color: #f3f6ff;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035), 0 10px 25px rgba(0, 0, 0, .12);
+        backdrop-filter: blur(12px);
+        transition: .22s ease;
+    }
+
+
+        .name-input-wrapper input::placeholder {
+            color: #61708a;
+        }
+
+
+        .name-input-wrapper input:hover {
+            border-color: rgba(104, 142, 255, .25);
+        }
+
+
+        .name-input-wrapper input:focus {
+            border-color: rgba(102, 143, 255, .78);
+            background: rgba(12, 20, 39, .72);
+            box-shadow: 0 0 0 3px rgba(79, 113, 255, .11), 0 14px 35px rgba(45, 75, 165, .15), inset 0 1px 0 rgba(255, 255, 255, .045);
+        }
+
+
+/* ================================================================
+   INPUT ICON
+   ================================================================ */
+
+.name-input-icon {
+    position: absolute;
+    left: 17px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    opacity: .65;
+    pointer-events: none;
+    filter: drop-shadow( 0 0 8px rgba(75, 118, 255, .25) );
+}
+
+
+/* ================================================================
+   CHECK
+   ================================================================ */
+
+.input-check {
+    position: absolute;
+    right: 17px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #65e1a0;
+    font-size: 14px;
+    filter: drop-shadow( 0 0 8px rgba(101, 225, 160, .35) );
+    pointer-events: none;
+}
+
+
+/* ================================================================
+   JOIN BUTTON
+   ================================================================ */
+
+.join-button {
+    width: 100%;
+    height: 55px;
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient( 135deg, #6e9bff, #597eea 48%, #7359e9 );
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 16px 35px rgba(68, 98, 218, .30), 0 0 30px rgba(89, 84, 255, .08), inset 0 1px 0 rgba(255, 255, 255, .20);
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .18s ease;
+}
+
+
+    .join-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        filter: brightness(1.07);
+        box-shadow: 0 20px 42px rgba(68, 98, 218, .38), 0 0 38px rgba(89, 84, 255, .13), inset 0 1px 0 rgba(255, 255, 255, .22);
+    }
+
+
+    .join-button:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+
+    .join-button:disabled {
+        opacity: .60;
+        cursor: not-allowed;
+    }
+
+
+.join-arrow {
+    font-size: 17px;
+    transition: transform .18s ease;
+}
+
+
+.join-button:hover:not(:disabled) .join-arrow {
+    transform: translateX(3px);
+}
+
+
+/* ================================================================
+   PRIVATE CONVERSATION BOX
+   ================================================================ */
+
+.join-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, .065);
+    background: rgba(255, 255, 255, .025);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+    backdrop-filter: blur(10px);
+}
+
+
+.privacy-icon {
+    width: 29px;
+    height: 29px;
+    flex: 0 0 29px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(77, 112, 255, .10);
+    border: 1px solid rgba(87, 123, 255, .10);
+    font-size: 13px;
+}
+
+
+.privacy-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+
+    .privacy-content strong {
+        color: #c4cde0;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+
+    .privacy-content span {
+        color: #6f7d96;
+        font-size: 9px;
+        line-height: 1.55;
+    }
+
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+
+.join-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 22px;
+    color: #596780;
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+
+.footer-separator {
+    opacity: .40;
+}
+
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+
+@media (max-width: 700px) {
+
+    .join-screen {
+        min-height: 100dvh;
+        padding: 20px 14px;
+    }
+
+
+    .join-card {
+        width: 100%;
+        max-width: 430px;
+        padding: 30px 20px 23px;
+        border-radius: 23px;
+    }
+
+
+    .join-brand {
+        margin-bottom: 21px;
+    }
+
+
+    .join-brand-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+
+    .join-brand-name {
+        font-size: 18px;
+    }
+
+
+    .room-badge {
+        margin-bottom: 20px;
+    }
+
+
+    .join-hero-icon {
+        width: 67px;
+        height: 67px;
+        margin-bottom: 18px;
+        border-radius: 20px;
+    }
+
+
+    .join-card h1 {
+        font-size: 25px;
+    }
+
+
+    .join-description {
+        margin: 11px auto 24px;
+        font-size: 11px;
+    }
+
+
+    .name-input-wrapper input {
+        height: 52px;
+        border-radius: 14px;
+    }
+
+
+    .join-button {
+        height: 52px;
+        border-radius: 14px;
+    }
+
+
+    .join-privacy {
+        padding: 12px;
+    }
+
+
+    .join-footer {
+        margin-top: 18px;
+    }
+}
+
+
+/* ================================================================
+   SMALL MOBILE
+   ================================================================ */
+
+@media (max-width: 420px) {
+
+    .join-screen {
+        padding: 15px 10px;
+    }
+
+
+    .join-card {
+        padding: 26px 16px 20px;
+        border-radius: 20px;
+    }
+
+
+        .join-card h1 {
+            font-size: 22px;
+        }
+
+
+    .join-description {
+        font-size: 10px;
+    }
+
+
+    .name-input-wrapper input {
+        height: 50px;
+    }
+
+
+    .join-button {
+        height: 50px;
+    }
+
+
+    .privacy-content strong {
+        font-size: 9px;
+    }
+
+
+    .privacy-content span {
+        font-size: 8px;
+    }
+}
+
+
+/* ================================================================
+   TOUCH DEVICES
+   ================================================================ */
+
+@media (hover: none) {
+
+    .join-button:hover:not(:disabled) {
+        transform: none;
+        filter: none;
+    }
+}
+
+
+/* ================================================================
+   REDUCED MOTION
+   ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .join-screen::before,
+    .join-screen::after,
+    .join-card,
+    .join-card::before,
+    .join-card::after {
+        animation: none !important;
+    }
+
+    .join-button,
+    .join-arrow,
+    .name-input-wrapper input {
+        transition: none !important;
     }
 }
