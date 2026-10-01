@@ -10,368 +10,634 @@
 
 <div class="home-page @(darkMode ? "theme-dark" : "theme-light")">
 
-    <header class="home-navbar">
-        <div class="home-navbar-inner">
-            <a class="home-logo" href="/" aria-label="ChatApp home">
-                <span class="home-logo-mark">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 5.5A4.5 4.5 0 0 1 9.5 1h5A4.5 4.5 0 0 1 19 5.5v5a4.5 4.5 0 0 1-4.5 4.5h-2.2L9 18.5V15H9.5A4.5 4.5 0 0 1 5 10.5v-5Z" />
-                        <circle cx="9" cy="8" r="1.1" />
-                        <circle cx="12" cy="8" r="1.1" />
-                        <circle cx="15" cy="8" r="1.1" />
-                    </svg>
+    <!-- =========================================================
+         LIVE BACKGROUND
+         ========================================================= -->
+    <div class="live-background" aria-hidden="true">
+
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+        <div class="ambient-glow glow-3"></div>
+
+        <div class="background-grid"></div>
+
+        <!-- Floating blue butterflies -->
+        <div class="butterfly-field">
+
+            <span class="blue-butterfly butterfly-1">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
                 </span>
-                <span class="home-logo-text">Chat<span>App</span></span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-2">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-3">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-4">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-5">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-6">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+            <span class="blue-butterfly butterfly-7">
+                <span class="wing wing-left">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="wing wing-right">
+                    <span class="wing-shine"></span>
+                </span>
+                <span class="body"></span>
+                <span class="antenna antenna-left"></span>
+                <span class="antenna antenna-right"></span>
+            </span>
+
+        </div>
+
+        <!-- Floating particles -->
+        <div class="particle-field">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Tiny stars -->
+        <div class="star-field">
+            <span class="star star-1">✦</span>
+            <span class="star star-2">✧</span>
+            <span class="star star-3">✦</span>
+            <span class="star star-4">·</span>
+            <span class="star star-5">✧</span>
+            <span class="star star-6">·</span>
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         NAVBAR
+         ========================================================= -->
+    <header class="home-navbar">
+
+        <div class="brand-area">
+
+            <div class="brand-icon">
+                <span>💬</span>
+            </div>
+
+            <div class="brand-text">
+                <strong>ChatApp</strong>
+                <span>Private conversations</span>
+            </div>
+
+        </div>
+
+
+        <nav class="desktop-nav">
+
+            <a href="#create-room">
+                Create room
             </a>
 
-            <nav class="home-nav" aria-label="Main navigation">
-                <a class="home-nav-link active" href="#">Home</a>
-            </nav>
+        </nav>
 
-            <div class="home-nav-right">
-                <span class="nav-status">
-                    <span class="nav-status-dot"></span>
-                    Live
-                </span>
 
-                <button class="theme-button"
-                        type="button"
-                        @onclick="ToggleTheme"
-                        aria-label="Toggle light and dark mode"
-                        title="Toggle theme">
-                    <span class="theme-icon">@(darkMode ? "☀" : "☾")</span>
-                </button>
+        <div class="navbar-actions">
 
-                <button class="chulbul-button"
-                        type="button"
-                        @onclick="OpenChulbul">
-                    <span class="chulbul-heart">♥</span>
-                    Chulbul
-                </button>
+            <button class="theme-button"
+                    type="button"
+                    @onclick="ToggleTheme"
+                    aria-label="Toggle theme">
 
-                <a class="nav-start-button" href="#create-room">
-                    Start chatting
-                    <span>→</span>
-                </a>
-            </div>
+                @if (darkMode)
+                {
+                    <span>☀</span>
+                }
+                else
+                {
+                    <span>☾</span>
+                }
+
+            </button>
+
+
+            <button class="chulbul-button"
+                    type="button"
+                    @onclick="OpenChulbul">
+
+                <span class="chulbul-button-sparkle">✨</span>
+                <span>Chulbul</span>
+
+            </button>
+
         </div>
+
     </header>
 
-    <main>
-        <section class="hero-section" aria-labelledby="home-title">
-            <div class="hero-inner">
-                <div class="hero-copy">
-                    <div class="hero-badge">
-                        <span class="hero-badge-dot"></span>
-                        Secure
-                        <span class="badge-separator">•</span>
-                        Real-time
-                        <span class="badge-separator">•</span>
-                        Private
-                    </div>
 
-                    <h1 class="hero-title" id="home-title">
-                        Talk privately.
-                        <span>Stay connected.</span>
-                    </h1>
+    <!-- =========================================================
+         HERO
+         ========================================================= -->
+    <section class="hero-section">
 
-                    <p class="hero-description">
-                        Create a private room, share one invite link, and start a real-time conversation in seconds.
-                    </p>
+        <div class="hero-inner">
 
-                    <div class="hero-actions">
-                        <a class="hero-primary-action" href="#create-room">
-                            Start private chat
-                            <span>→</span>
-                        </a>
-                        <a class="hero-secondary-action" href="#how-it-works">
-                            How it works
-                        </a>
-                    </div>
+            <!-- =================================================
+                 LEFT SIDE
+                 ================================================= -->
+            <div class="hero-copy">
 
-                    <div class="hero-feature-grid" id="features">
-                        <div class="hero-feature">
-                            <div class="feature-icon blue">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M13.1 2 5.5 13h5.4L9.8 22l8.7-12h-5.7L13.1 2Z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Real-time messaging</h3>
-                                <p>Messages appear instantly.</p>
-                            </div>
-                        </div>
+                <div class="eyebrow">
 
-                        <div class="hero-feature">
-                            <div class="feature-icon green">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M7 10V7a5 5 0 0 1 10 0v3" />
-                                    <rect x="4" y="10" width="16" height="11" rx="2" />
-                                    <circle cx="12" cy="15.5" r="1.3" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Private by design</h3>
-                                <p>One room. One shareable link.</p>
-                            </div>
-                        </div>
+                    <span class="eyebrow-dot"></span>
 
-                        <div class="hero-feature">
-                            <div class="feature-icon purple">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="9" cy="8" r="3" />
-                                    <circle cx="17" cy="9" r="2.5" />
-                                    <path d="M3.5 19c.6-3 2.5-4.7 5.5-4.7s4.9 1.7 5.5 4.7" />
-                                    <path d="M14 15c2.9-.5 5.4.7 6.3 3.5" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Easy to invite</h3>
-                                <p>Share the room link in one click.</p>
-                            </div>
-                        </div>
+                    Simple. Private. Real-time.
 
-                        <div class="hero-feature">
-                            <div class="feature-icon cyan">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <rect x="6" y="2.5" width="12" height="19" rx="2.2" />
-                                    <path d="M10 18.2h4" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Works everywhere</h3>
-                                <p>Desktop, tablet, or mobile.</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <div class="room-card-wrap" id="create-room">
-                    <div class="room-card">
-                        <div class="room-card-top">
-                            <div class="room-icon-wrap">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M7 10V7a5 5 0 0 1 10 0v3" />
-                                    <rect x="4" y="10" width="16" height="11" rx="2" />
-                                    <circle cx="12" cy="15.5" r="1.3" />
-                                </svg>
-                            </div>
-                            <span class="room-label">PRIVATE ROOM</span>
+
+                <h1>
+                    Talk freely.
+                    <span class="gradient-text">
+                        Stay connected.
+                    </span>
+                </h1>
+
+
+                <p class="hero-description">
+                    Create a private room, invite your people,
+                    and start chatting instantly.
+                    Simple conversations without the unnecessary stuff.
+                </p>
+
+
+                <div class="hero-features">
+
+                    <div class="hero-feature">
+
+                        <div class="hero-feature-icon blue">
+                            ⚡
                         </div>
 
-                        <h2>Create your private room</h2>
-
-                        <p class="room-card-description">
-                            Enter your name and create a private conversation in seconds.
-                        </p>
-
-                        <div class="name-field">
-                            <label for="displayName">Your display name</label>
-
-                            <div class="name-input">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="12" cy="8" r="3.2" />
-                                    <path d="M5.5 20c.8-3.6 3-5.4 6.5-5.4s5.7 1.8 6.5 5.4" />
-                                </svg>
-
-                                <input id="displayName"
-                                       @bind="name"
-                                       @bind:event="oninput"
-                                       @onkeydown="HandleNameKeyDown"
-                                       maxlength="40"
-                                       autocomplete="off"
-                                       placeholder="e.g. Manish" />
-
-                                @if (!string.IsNullOrWhiteSpace(name))
-                                {
-                                    <span class="input-valid">✓</span>
-                                }
-                            </div>
+                        <div>
+                            <strong>Real-time</strong>
+                            <span>Messages appear instantly</span>
                         </div>
 
-                        @if (!string.IsNullOrWhiteSpace(error))
+                    </div>
+
+
+                    <div class="hero-feature">
+
+                        <div class="hero-feature-icon purple">
+                            🔒
+                        </div>
+
+                        <div>
+                            <strong>Private</strong>
+                            <span>Your room stays yours</span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="hero-feature">
+
+                        <div class="hero-feature-icon cyan">
+                            🔗
+                        </div>
+
+                        <div>
+                            <strong>Shareable</strong>
+                            <span>Invite with one simple link</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="hero-status">
+
+                    <span class="online-dot"></span>
+
+                    <span>
+                        Rooms are ready in seconds
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CREATE ROOM GLASS PANEL
+                 ================================================= -->
+            <div class="room-card-wrap" id="create-room">
+
+                <div class="card-glow"></div>
+
+                <div class="card-orbit orbit-one"></div>
+                <div class="card-orbit orbit-two"></div>
+
+
+                <div class="room-card">
+
+                    <div class="card-top-glow"></div>
+                    <div class="glass-highlight"></div>
+                    <div class="glass-reflection"></div>
+
+
+                    <!-- Card heading -->
+                    <div class="room-card-header">
+
+                        <div class="room-icon-wrap">
+
+                            <div class="room-icon">
+                                💬
+                            </div>
+
+                            <span class="room-icon-ring"></span>
+                            <span class="room-icon-ring ring-two"></span>
+
+                        </div>
+
+
+                        <div class="room-heading">
+
+                            <span class="room-label">
+                                START A CONVERSATION
+                            </span>
+
+                            <h2>
+                                Create your room
+                            </h2>
+
+                            <p>
+                                Your private space is just one click away.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Display name -->
+                    <div class="form-group">
+
+                        <label for="displayName">
+                            Display name
+                        </label>
+
+                        <div class="input-shell">
+
+                            <div class="input-icon">
+                                <span></span>
+                            </div>
+
+                            <input id="displayName"
+                                   @bind="name"
+                                   @bind:event="oninput"
+                                   @onkeydown="HandleNameKeyDown"
+                                   maxlength="40"
+                                   autocomplete="off"
+                                   placeholder="Enter your name" />
+
+                            <span class="input-counter">
+                                @name.Length/40
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Error -->
+                    @if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        <div class="error-message">
+
+                            <span class="error-icon">!</span>
+
+                            <span>
+                                @error
+                            </span>
+
+                        </div>
+                    }
+
+
+                    <!-- Create button -->
+                    <button class="create-room-button"
+                            type="button"
+                            @onclick="CreateRoom"
+                            disabled="@creating">
+
+                        <span class="button-shine"></span>
+
+                        @if (creating)
                         {
-                            <div class="form-error">
-                                <span class="form-error-icon">!</span>
-                                <span>@error</span>
-                            </div>
+                            <span class="button-spinner"></span>
+                            <span>Creating room...</span>
+                        }
+                        else
+                        {
+                            <span>Create private room</span>
+
+                            <span class="button-arrow">
+                                →
+                            </span>
                         }
 
-                        <button class="create-room-button"
-                                @onclick="CreateRoom"
-                                disabled="@creating">
-                            @if (creating)
-                            {
-                                <span class="button-spinner"></span>
-                                <span>Creating room...</span>
-                            }
-                            else
-                            {
-                                <span>Start private chat</span>
-                                <span class="button-arrow">→</span>
-                            }
-                        </button>
+                    </button>
 
-                        <div class="room-card-note">
-                            No account required
-                            <span>•</span>
-                            Free to use
+
+                    <!-- Trust divider -->
+                    <div class="private-divider">
+
+                        <span></span>
+
+                        <div>
+                            <i></i>
+                            PRIVATE BY DESIGN
+                            <i></i>
                         </div>
 
-                        <div class="privacy-callout" id="privacy">
-                            <div class="privacy-callout-icon">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12 3 19 6v5c0 4.3-2.9 7.8-7 10-4.1-2.2-7-5.7-7-10V6l7-3Z" />
-                                    <path d="m9.5 12 1.7 1.7 3.5-3.8" />
-                                </svg>
-                            </div>
-                            <div>
-                                <strong>Private conversation</strong>
-                                <span>Anyone with the room link can join.</span>
-                            </div>
+                        <span></span>
+
+                    </div>
+
+
+                    <!-- Privacy box -->
+                    <div class="privacy-callout" id="privacy">
+
+                        <div class="privacy-icon">
+                            <span>🔐</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <section class="steps-section" id="how-it-works">
-            <div class="section-inner">
-                <div class="section-heading">
-                    <span>SIMPLE BY DESIGN</span>
-                    <h2>Start chatting in three simple steps.</h2>
-                </div>
+                        <div class="privacy-content">
 
-                <div class="steps-grid">
-                    <div class="step-card">
-                        <span class="step-number">01</span>
-                        <div class="step-icon">✦</div>
-                        <h3>Enter your name</h3>
-                        <p>Choose the display name you want people in the room to see.</p>
-                    </div>
+                            <strong>
+                                Your room stays private
+                            </strong>
 
-                    <div class="step-card">
-                        <span class="step-number">02</span>
-                        <div class="step-icon">↗</div>
-                        <h3>Create your room</h3>
-                        <p>We generate a unique private room link for your conversation.</p>
+                            <p>
+                                Only people with your room link
+                                can join the conversation.
+                            </p>
+
+                        </div>
+
+                        <div class="privacy-check">
+                            ✓
+                        </div>
+
                     </div>
 
-                    <div class="step-card">
-                        <span class="step-number">03</span>
-                        <div class="step-icon">💬</div>
-                        <h3>Share and chat</h3>
-                        <p>Send the link and start talking together in real time.</p>
+
+                    <!-- Bottom info -->
+                    <div class="card-security">
+
+                        <div class="security-item">
+
+                            <span class="security-dot"></span>
+
+                            <span>
+                                No account required
+                            </span>
+
+                        </div>
+
+
+                        <span class="security-separator">
+                            •
+                        </span>
+
+
+                        <div class="security-item">
+
+                            <span>
+                                🔒
+                            </span>
+
+                            <span>
+                                Private room
+                            </span>
+
+                        </div>
+
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <section class="trust-section">
-            <div class="trust-inner">
-                <div class="trust-item">
-                    <div class="trust-icon">⚡</div>
-                    <div>
-                        <strong>Instant messaging</strong>
-                        <span>Real-time and responsive</span>
-                    </div>
                 </div>
 
-                <div class="trust-divider"></div>
-
-                <div class="trust-item">
-                    <div class="trust-icon">🔒</div>
-                    <div>
-                        <strong>Privacy first</strong>
-                        <span>No signup required</span>
-                    </div>
-                </div>
-
-                <div class="trust-divider"></div>
-
-                <div class="trust-item">
-                    <div class="trust-icon">👥</div>
-                    <div>
-                        <strong>Easy to share</strong>
-                        <span>One room link is all you need</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="home-footer">
-        <div class="home-footer-inner">
-            <div class="footer-brand">
-                <span class="footer-brand-mark">💬</span>
-                <div>
-                    <strong>Chat<span>App</span></strong>
-                    <span>Built for simple conversations.</span>
-                </div>
             </div>
 
-            <div class="footer-copy">
-                © @DateTime.Now.Year ChatApp
-            </div>
-
-            <div class="footer-links">
-                <a href="#privacy">Privacy</a>
-                <a href="#features">Features</a>
-                <a href="#how-it-works">How it works</a>
-            </div>
         </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         FOOTER
+         ========================================================= -->
+    <footer class="home-footer">
+
+        <div class="footer-brand">
+
+            <span class="footer-logo">
+                💬
+            </span>
+
+            <span>
+                ChatApp
+            </span>
+
+        </div>
+
+        <span>
+            Private conversations, made simple.
+        </span>
+
     </footer>
 
+
+    <!-- =========================================================
+         CHULBUL MODAL
+         ========================================================= -->
     @if (showChulbul)
     {
-        <div class="chulbul-overlay" @onclick="CloseChulbul">
-            <div class="chulbul-modal" @onclick:stopPropagation="true">
-                <button class="chulbul-close"
+        <div class="chulbul-overlay"
+             @onclick="CloseChulbul">
+
+            <div class="chulbul-modal"
+                 @onclick:stopPropagation="true">
+
+                <div class="modal-bg-glow glow-a"></div>
+                <div class="modal-bg-glow glow-b"></div>
+
+                <div class="modal-particles">
+                    <span>✦</span>
+                    <span>✧</span>
+                    <span>·</span>
+                    <span>✦</span>
+                </div>
+
+
+                <button class="modal-close"
                         type="button"
-                        aria-label="Close"
                         @onclick="CloseChulbul">
                     ×
                 </button>
 
-                <div class="chulbul-sparkles">✦ ✧ ✦</div>
-                <div class="chulbul-big-heart">♥</div>
-                <span class="chulbul-mini-title">A little something...</span>
 
-                <h2>For my Chulbul ❤️</h2>
+                <div class="chulbul-character">
+
+                    <div class="character-glow"></div>
+
+                    <span class="mini-butterfly">
+                        🦋
+                    </span>
+
+                </div>
+
+
+                <span class="modal-eyebrow">
+                    CHATAPP FRIEND
+                </span>
+
+
+                <h2>
+                    Hey there! 👋
+                </h2>
+
 
                 <p>
-                    Some conversations are just conversations.
-                    And some become memories. ✨
+                    Chulbul is here to keep your conversations
+                    a little more fun.
                 </p>
 
-                <div class="chulbul-divider"></div>
-                <span class="chulbul-signature">Made with a little extra love.</span>
+
+                <div class="modal-divider">
+                    <span></span>
+                    <i>✦</i>
+                    <span></span>
+                </div>
+
+
+                <button class="modal-button"
+                        type="button"
+                        @onclick="CloseChulbul">
+
+                    <span>Let's chat</span>
+                    <span>→</span>
+
+                </button>
+
             </div>
+
         </div>
     }
+
 </div>
 
+
 @code {
+
     private string name = string.Empty;
     private string? error;
     private bool creating;
     private bool showChulbul;
     private bool darkMode = true;
 
+
     private void OpenChulbul()
     {
         showChulbul = true;
     }
+
 
     private void CloseChulbul()
     {
         showChulbul = false;
     }
 
+
     private void ToggleTheme()
     {
         darkMode = !darkMode;
     }
+
 
     private async Task CreateRoom()
     {
@@ -416,6 +682,7 @@
         }
     }
 
+
     private async Task HandleNameKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !creating)
@@ -423,5 +690,5 @@
             await CreateRoom();
         }
     }
-}
 
+}
