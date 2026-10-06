@@ -1,7 +1,7 @@
 # ChatApp — real-time private 2-person chat
 
 This version is intentionally simple to run: the Blazor Web App hosts the UI,
-SignalR hub and SQLite persistence under one public origin.
+SignalR hub and Postgrel Sql persistence under one public origin.
 
 ## Features
 - Create a private room.
