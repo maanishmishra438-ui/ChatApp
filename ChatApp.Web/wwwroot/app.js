@@ -205,3 +205,70 @@
     }
 
 };
+
+// ============================================================
+// VIEW ONCE PHOTO
+// ============================================================
+
+window.fetchViewOncePhoto = async function (messageId, roomCode, userName) {
+    try {
+        if (!messageId || !roomCode || !userName) {
+            throw new Error("Invalid View Once photo request.");
+        }
+
+        const response = await fetch(
+            `/api/media/view-once/${encodeURIComponent(messageId)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    roomCode: roomCode,
+                    userName: userName
+                })
+            }
+        );
+
+        if (!response.ok) {
+            if (response.status === 410) {
+                throw new Error(
+                    "This view-once photo has already been opened or is no longer available."
+                );
+            }
+
+            if (response.status === 403) {
+                throw new Error(
+                    "You cannot open this photo."
+                );
+            }
+
+            let message = "Unable to open photo.";
+
+            try {
+                const data = await response.json();
+
+                if (data && data.message) {
+                    message = data.message;
+                }
+            }
+            catch {
+                // Ignore JSON parsing failure.
+            }
+
+            throw new Error(message);
+        }
+
+        const blob = await response.blob();
+
+        if (!blob || blob.size === 0) {
+            throw new Error("Photo is empty or unavailable.");
+        }
+
+        return URL.createObjectURL(blob);
+    }
+    catch (error) {
+        console.error("View Once photo error:", error);
+        throw error;
+    }
+};

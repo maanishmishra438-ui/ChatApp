@@ -1,11 +1,12 @@
-using ChatApp.Web.Services;
+﻿using ChatApp.Web.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ChatApp.Web.Hubs;
 
 public sealed class ChatHub(
     ChatService chatService,
-    PushNotificationQueue pushNotificationQueue) : Hub
+    PushNotificationQueue pushNotificationQueue,
+    SupabaseStorageService supabaseStorageService) : Hub
 {
     // ============================================================
     // PRESENCE STATE
@@ -25,29 +26,14 @@ public sealed class ChatHub(
         ConnectionPresence =
             new(StringComparer.OrdinalIgnoreCase);
 
-    // ------------------------------------------------------------
-    // Last heartbeat/activity received from each connection.
-    // This is NOT stored in the database.
-    // ------------------------------------------------------------
-
     private static readonly Dictionary<
         string,
         DateTime>
         ConnectionLastSeen =
             new(StringComparer.OrdinalIgnoreCase);
 
-
-    // ------------------------------------------------------------
-    // If a connection does not send a heartbeat for this long,
-    // it is considered stale/offline.
-    //
-    // Client heartbeat will normally be sent every 10 seconds.
-    // 45 seconds gives enough tolerance for browser throttling.
-    // ------------------------------------------------------------
-
     private static readonly TimeSpan StaleConnectionTimeout =
         TimeSpan.FromSeconds(45);
-
 
     private sealed record PresenceInfo(
         string RoomCode,
@@ -70,13 +56,11 @@ public sealed class ChatHub(
         userName =
             userName.Trim();
 
-
         if (string.IsNullOrWhiteSpace(userName))
         {
             throw new HubException(
                 "User name is required.");
         }
-
 
         if (userName.Length > 40)
         {
@@ -84,34 +68,22 @@ public sealed class ChatHub(
                 "User name is too long.");
         }
 
-
         if (!await chatService.RoomExistsAsync(roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
 
-
-        // --------------------------------------------------------
-        // Add connection to SignalR group
-        // --------------------------------------------------------
-
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             roomCode);
-
 
         List<string> onlineUsers;
 
         bool becameOnline = false;
 
-
         lock (PresenceLock)
         {
-            // ----------------------------------------------------
-            // Get/create room
-            // ----------------------------------------------------
-
             if (!RoomConnections.TryGetValue(
                     roomCode,
                     out var roomUsers))
@@ -125,11 +97,6 @@ public sealed class ChatHub(
                 RoomConnections[roomCode] =
                     roomUsers;
             }
-
-
-            // ----------------------------------------------------
-            // Get/create user's connections
-            // ----------------------------------------------------
 
             if (!roomUsers.TryGetValue(
                     userName,
@@ -145,18 +112,8 @@ public sealed class ChatHub(
                 becameOnline = true;
             }
 
-
-            // ----------------------------------------------------
-            // Add this SignalR connection
-            // ----------------------------------------------------
-
             connections.Add(
                 Context.ConnectionId);
-
-
-            // ----------------------------------------------------
-            // Store connection presence
-            // ----------------------------------------------------
 
             ConnectionPresence[
                 Context.ConnectionId] =
@@ -164,19 +121,9 @@ public sealed class ChatHub(
                     roomCode,
                     userName);
 
-
-            // ----------------------------------------------------
-            // Mark connection alive
-            // ----------------------------------------------------
-
             ConnectionLastSeen[
                 Context.ConnectionId] =
                 DateTime.UtcNow;
-
-
-            // ----------------------------------------------------
-            // Build online user list
-            // ----------------------------------------------------
 
             onlineUsers =
                 roomUsers
@@ -193,19 +140,9 @@ public sealed class ChatHub(
                     .ToList();
         }
 
-
-        // --------------------------------------------------------
-        // Send current online users to caller
-        // --------------------------------------------------------
-
         await Clients.Caller.SendAsync(
             "RoomPresenceSnapshot",
             onlineUsers);
-
-
-        // --------------------------------------------------------
-        // Tell everyone when a user becomes online
-        // --------------------------------------------------------
 
         if (becameOnline)
         {
@@ -220,14 +157,6 @@ public sealed class ChatHub(
 
     // ============================================================
     // HEARTBEAT
-    // ============================================================
-    //
-    // Client calls this periodically.
-    //
-    // IMPORTANT:
-    // Nothing is written to the database.
-    //
-    // This only updates in-memory presence.
     // ============================================================
 
     public Task PresenceHeartbeat()
@@ -268,13 +197,11 @@ public sealed class ChatHub(
         text =
             text.Trim();
 
-
         if (string.IsNullOrWhiteSpace(sender))
         {
             throw new HubException(
                 "Sender name is required.");
         }
-
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -282,24 +209,17 @@ public sealed class ChatHub(
                 "Message cannot be empty.");
         }
 
-
         if (text.Length > 2000)
         {
             throw new HubException(
                 "Message is too long.");
         }
 
-
         if (!await chatService.RoomExistsAsync(roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
-
-
-        // --------------------------------------------------------
-        // SAVE MESSAGE
-        // --------------------------------------------------------
 
         var message =
             await chatService.SaveMessageAsync(
@@ -308,39 +228,44 @@ public sealed class ChatHub(
                 text,
                 replyToMessageId);
 
-
-        // --------------------------------------------------------
-        // REAL-TIME SIGNALR MESSAGE
-        // --------------------------------------------------------
-
         await Clients.Group(roomCode)
             .SendAsync(
                 "ReceiveMessage",
                 new
                 {
-                    id = message.Id,
-                    sender = message.Sender,
-                    text = message.Text,
+                    id =
+                        message.Id,
+
+                    sender =
+                        message.Sender,
+
+                    text =
+                        message.Text,
+
                     sentAt =
                         message.SentAt.ToString("O"),
-                    isRead = message.IsRead,
-                    isDelivered = false,
+
+                    isRead =
+                        message.IsRead,
+
+                    isDelivered =
+                        false,
+
                     replyToMessageId =
                         message.ReplyToMessageId,
+
                     replyToSender =
                         message.ReplyToSender,
+
                     replyToText =
                         message.ReplyToText,
+
                     isDeleted =
                         message.IsDeleted,
+
                     reactions =
                         Array.Empty<object>()
                 });
-
-
-        // --------------------------------------------------------
-        // WEB PUSH NOTIFICATION
-        // --------------------------------------------------------
 
         try
         {
@@ -354,6 +279,387 @@ public sealed class ChatHub(
         {
             // Push notification failure must never
             // break normal chat messaging.
+        }
+    }
+
+
+    // ============================================================
+    // SEND PHOTO
+    // ============================================================
+    //
+    // Supported:
+    //
+    // Normal
+    // ViewOnce
+    //
+    // Timed is intentionally NOT supported yet.
+    // ============================================================
+
+    public async Task SendPhoto(
+        string roomCode,
+        string sender,
+        byte[] fileBytes,
+        string fileName,
+        string contentType,
+        string photoMode = "Normal",
+        long? replyToMessageId = null)
+    {
+        // --------------------------------------------------------
+        // NORMALIZE INPUT
+        // --------------------------------------------------------
+
+        roomCode =
+            roomCode
+                .Trim()
+                .ToLowerInvariant();
+
+        sender =
+            sender.Trim();
+
+        fileName =
+            Path.GetFileName(
+                fileName.Trim());
+
+        contentType =
+            contentType.Trim();
+
+        photoMode =
+            photoMode.Trim();
+
+
+        // --------------------------------------------------------
+        // BASIC VALIDATION
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(sender))
+        {
+            throw new HubException(
+                "Sender name is required.");
+        }
+
+        if (sender.Length > 40)
+        {
+            throw new HubException(
+                "Sender name is too long.");
+        }
+
+
+        // --------------------------------------------------------
+        // ROOM CHECK
+        // --------------------------------------------------------
+
+        try
+        {
+            if (!await chatService.RoomExistsAsync(
+                    roomCode))
+            {
+                throw new HubException(
+                    "Room not found.");
+            }
+        }
+        catch (HubException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new HubException(
+                $"Room check failed: {ex.Message}");
+        }
+
+
+        // --------------------------------------------------------
+        // PHOTO MODE
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(photoMode))
+        {
+            photoMode =
+                "Normal";
+        }
+
+        if (!string.Equals(
+                photoMode,
+                "Normal",
+                StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(
+                photoMode,
+                "ViewOnce",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new HubException(
+                $"Unsupported photo mode: {photoMode}");
+        }
+
+        photoMode =
+            string.Equals(
+                photoMode,
+                "ViewOnce",
+                StringComparison.OrdinalIgnoreCase)
+                ? "ViewOnce"
+                : "Normal";
+
+
+        // --------------------------------------------------------
+        // FILE VALIDATION
+        // --------------------------------------------------------
+
+        if (fileBytes is null ||
+            fileBytes.Length == 0)
+        {
+            throw new HubException(
+                "Photo file is empty.");
+        }
+
+        const long MaxPhotoSize =
+            10 * 1024 * 1024;
+
+        if (fileBytes.Length > MaxPhotoSize)
+        {
+            throw new HubException(
+                $"Photo size cannot exceed 10 MB. " +
+                $"Current size: " +
+                $"{fileBytes.Length / 1024d / 1024d:0.##} MB");
+        }
+
+
+        // --------------------------------------------------------
+        // CONTENT TYPE VALIDATION
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            throw new HubException(
+                "Photo content type is empty.");
+        }
+
+        if (!contentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new HubException(
+                $"Only image files are allowed. " +
+                $"Received: {contentType}");
+        }
+
+
+        // --------------------------------------------------------
+        // FILE NAME VALIDATION
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            throw new HubException(
+                "Photo file name is required.");
+        }
+
+        if (fileName.Length > 200)
+        {
+            throw new HubException(
+                "Photo file name is too long.");
+        }
+
+
+        // --------------------------------------------------------
+        // GET EXTENSION
+        // --------------------------------------------------------
+
+        var extension =
+            Path.GetExtension(fileName)
+                .ToLowerInvariant();
+
+        var allowedExtensions =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".webp"
+            };
+
+        if (!allowedExtensions.Contains(
+                extension))
+        {
+            throw new HubException(
+                $"Unsupported image format: {extension}");
+        }
+
+
+        // --------------------------------------------------------
+        // SAFE STORAGE FILE NAME
+        // --------------------------------------------------------
+
+        var storageFileName =
+            $"{Guid.NewGuid():N}{extension}";
+
+        var storagePath =
+            $"rooms/{roomCode}/{storageFileName}";
+
+
+        // ========================================================
+        // SUPABASE UPLOAD
+        // ========================================================
+
+        string mediaPath;
+
+        try
+        {
+            mediaPath =
+                await supabaseStorageService
+                    .UploadPhotoAsync(
+                        fileBytes,
+                        storagePath,
+                        contentType);
+        }
+        catch (Exception ex)
+        {
+            throw new HubException(
+                $"Supabase photo upload failed: {ex.Message}");
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                mediaPath))
+        {
+            throw new HubException(
+                "Supabase upload completed but " +
+                "returned an empty media path.");
+        }
+
+
+        // ========================================================
+        // SAVE PHOTO METADATA
+        // ========================================================
+
+        ChatApp.Web.Data.ChatMessage message;
+
+        try
+        {
+            message =
+                await chatService.SavePhotoAsync(
+                    roomCode,
+                    sender,
+                    mediaPath,
+                    contentType,
+                    fileName,
+                    fileBytes.LongLength,
+                    photoMode,
+                    replyToMessageId);
+        }
+        catch (Exception ex)
+        {
+            throw new HubException(
+                $"Photo database save failed: {ex.Message}");
+        }
+
+        if (message is null)
+        {
+            throw new HubException(
+                "Photo was saved but no message was returned.");
+        }
+
+
+        // ========================================================
+        // REAL-TIME SIGNALR MESSAGE
+        // ========================================================
+
+        try
+        {
+            await Clients.Group(roomCode)
+                .SendAsync(
+                    "ReceiveMessage",
+                    new
+                    {
+                        id =
+                            message.Id,
+
+                        sender =
+                            message.Sender,
+
+                        text =
+                            message.Text,
+
+                        sentAt =
+                            message.SentAt.ToString("O"),
+
+                        isRead =
+                            message.IsRead,
+
+                        isDelivered =
+                            false,
+
+                        // PHOTO DATA
+                        messageType =
+                            message.MessageType,
+
+                        mediaPath =
+                            message.MediaPath,
+
+                        mediaContentType =
+                            message.MediaContentType,
+
+                        mediaFileName =
+                            message.MediaFileName,
+
+                        mediaSize =
+                            message.MediaSize,
+
+                        photoMode =
+                            message.PhotoMode,
+
+                        expiresAt =
+                            message.ExpiresAt,
+
+                        viewedAt =
+                            message.ViewedAt,
+
+                        // REPLY
+                        replyToMessageId =
+                            message.ReplyToMessageId,
+
+                        replyToSender =
+                            message.ReplyToSender,
+
+                        replyToText =
+                            message.ReplyToText,
+
+                        // DELETE
+                        isDeleted =
+                            message.IsDeleted,
+
+                        // REACTIONS
+                        reactions =
+                            Array.Empty<object>()
+                    });
+        }
+        catch (Exception ex)
+        {
+            throw new HubException(
+                $"Photo was saved, but SignalR broadcast failed: {ex.Message}");
+        }
+
+
+        // ========================================================
+        // WEB PUSH NOTIFICATION
+        // ========================================================
+        //
+        // Push failure MUST NOT make photo sending fail.
+        // ========================================================
+
+        try
+        {
+            await pushNotificationQueue.EnqueueAsync(
+                new PushNotificationJob(
+                    roomCode,
+                    sender,
+                    message));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(
+                $"Push notification queue failed for photo: " +
+                $"{ex.Message}");
         }
     }
 
@@ -375,18 +681,16 @@ public sealed class ChatHub(
         receiverName =
             receiverName.Trim();
 
-
         if (string.IsNullOrWhiteSpace(receiverName))
         {
             return;
         }
 
-
-        if (!await chatService.RoomExistsAsync(roomCode))
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
         {
             return;
         }
-
 
         await Clients.Group(roomCode)
             .SendAsync(
@@ -408,7 +712,6 @@ public sealed class ChatHub(
             roomCode
                 .Trim()
                 .ToLowerInvariant();
-
 
         return Clients
             .OthersInGroup(roomCode)
@@ -436,13 +739,12 @@ public sealed class ChatHub(
         readerName =
             readerName.Trim();
 
-
-        if (!await chatService.RoomExistsAsync(roomCode))
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
-
 
         var marked =
             await chatService.MarkMessageAsReadAsync(
@@ -450,12 +752,10 @@ public sealed class ChatHub(
                 messageId,
                 readerName);
 
-
         if (!marked)
         {
             return;
         }
-
 
         await Clients.Group(roomCode)
             .SendAsync(
@@ -481,13 +781,12 @@ public sealed class ChatHub(
         userName =
             userName.Trim();
 
-
-        if (!await chatService.RoomExistsAsync(roomCode))
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
-
 
         var deleted =
             await chatService.DeleteForMeAsync(
@@ -495,13 +794,11 @@ public sealed class ChatHub(
                 messageId,
                 userName);
 
-
         if (!deleted)
         {
             throw new HubException(
                 "Unable to delete this message.");
         }
-
 
         await Clients.Caller.SendAsync(
             "MessageDeletedForMe",
@@ -526,13 +823,12 @@ public sealed class ChatHub(
         senderName =
             senderName.Trim();
 
-
-        if (!await chatService.RoomExistsAsync(roomCode))
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
-
 
         var deleted =
             await chatService.DeleteForEveryoneAsync(
@@ -540,13 +836,11 @@ public sealed class ChatHub(
                 messageId,
                 senderName);
 
-
         if (!deleted)
         {
             throw new HubException(
                 "You can only unsend your own message.");
         }
-
 
         await Clients.Group(roomCode)
             .SendAsync(
@@ -576,13 +870,12 @@ public sealed class ChatHub(
         reaction =
             reaction.Trim();
 
-
-        if (!await chatService.RoomExistsAsync(roomCode))
+        if (!await chatService.RoomExistsAsync(
+                roomCode))
         {
             throw new HubException(
                 "Room not found.");
         }
-
 
         var result =
             await chatService.ToggleReactionAsync(
@@ -590,7 +883,6 @@ public sealed class ChatHub(
                 messageId,
                 userName,
                 reaction);
-
 
         await Clients.Group(roomCode)
             .SendAsync(
@@ -603,31 +895,18 @@ public sealed class ChatHub(
     // ============================================================
     // REMOVE STALE CONNECTIONS
     // ============================================================
-    //
-    // Called by PresenceCleanupService every 15 seconds.
-    //
-    // If a connection has not sent heartbeat for 45 seconds,
-    // we consider that connection dead/stale.
-    //
-    // Returns users that became completely offline.
-    // ============================================================
 
-    public static List<OfflinePresence> RemoveStaleConnections()
+    public static List<OfflinePresence>
+        RemoveStaleConnections()
     {
         var offlineUsers =
             new List<OfflinePresence>();
 
-
         var now =
             DateTime.UtcNow;
 
-
         lock (PresenceLock)
         {
-            // ----------------------------------------------------
-            // Find stale connections
-            // ----------------------------------------------------
-
             var staleConnections =
                 ConnectionLastSeen
                     .Where(
@@ -639,13 +918,9 @@ public sealed class ChatHub(
                             x.Key)
                     .ToList();
 
-
-            foreach (var connectionId in staleConnections)
+            foreach (var connectionId
+                in staleConnections)
             {
-                // ------------------------------------------------
-                // Get presence information
-                // ------------------------------------------------
-
                 if (!ConnectionPresence.TryGetValue(
                         connectionId,
                         out var presence))
@@ -656,21 +931,11 @@ public sealed class ChatHub(
                     continue;
                 }
 
-
-                // ------------------------------------------------
-                // Remove connection tracking
-                // ------------------------------------------------
-
                 ConnectionPresence.Remove(
                     connectionId);
 
                 ConnectionLastSeen.Remove(
                     connectionId);
-
-
-                // ------------------------------------------------
-                // Find room
-                // ------------------------------------------------
 
                 if (!RoomConnections.TryGetValue(
                         presence.RoomCode,
@@ -679,11 +944,6 @@ public sealed class ChatHub(
                     continue;
                 }
 
-
-                // ------------------------------------------------
-                // Find user
-                // ------------------------------------------------
-
                 if (!roomUsers.TryGetValue(
                         presence.UserName,
                         out var connections))
@@ -691,36 +951,19 @@ public sealed class ChatHub(
                     continue;
                 }
 
-
-                // ------------------------------------------------
-                // Remove stale connection
-                // ------------------------------------------------
-
                 connections.Remove(
                     connectionId);
-
-
-                // ------------------------------------------------
-                // User is offline only when ALL
-                // their connections are gone.
-                // ------------------------------------------------
 
                 if (connections.Count == 0)
                 {
                     roomUsers.Remove(
                         presence.UserName);
 
-
                     offlineUsers.Add(
                         new OfflinePresence(
                             presence.RoomCode,
                             presence.UserName));
                 }
-
-
-                // ------------------------------------------------
-                // Remove empty room
-                // ------------------------------------------------
 
                 if (roomUsers.Count == 0)
                 {
@@ -729,7 +972,6 @@ public sealed class ChatHub(
                 }
             }
         }
-
 
         return offlineUsers;
     }
@@ -742,17 +984,14 @@ public sealed class ChatHub(
     public override async Task OnDisconnectedAsync(
         Exception? exception)
     {
-        PresenceInfo? presence = null;
+        PresenceInfo? presence =
+            null;
 
-        bool becameOffline = false;
-
+        bool becameOffline =
+            false;
 
         lock (PresenceLock)
         {
-            // ----------------------------------------------------
-            // Get presence
-            // ----------------------------------------------------
-
             if (ConnectionPresence.TryGetValue(
                     Context.ConnectionId,
                     out var currentPresence))
@@ -760,21 +999,11 @@ public sealed class ChatHub(
                 presence =
                     currentPresence;
 
-
-                // ------------------------------------------------
-                // Remove connection tracking
-                // ------------------------------------------------
-
                 ConnectionPresence.Remove(
                     Context.ConnectionId);
 
                 ConnectionLastSeen.Remove(
                     Context.ConnectionId);
-
-
-                // ------------------------------------------------
-                // Remove from room
-                // ------------------------------------------------
 
                 if (RoomConnections.TryGetValue(
                         presence.RoomCode,
@@ -787,24 +1016,15 @@ public sealed class ChatHub(
                         connections.Remove(
                             Context.ConnectionId);
 
-
-                        // ----------------------------------------
-                        // No other connection for this user
-                        // ----------------------------------------
-
                         if (connections.Count == 0)
                         {
                             roomUsers.Remove(
                                 presence.UserName);
 
-                            becameOffline = true;
+                            becameOffline =
+                                true;
                         }
                     }
-
-
-                    // --------------------------------------------
-                    // Remove empty room
-                    // --------------------------------------------
 
                     if (roomUsers.Count == 0)
                     {
@@ -814,11 +1034,6 @@ public sealed class ChatHub(
                 }
             }
         }
-
-
-        // --------------------------------------------------------
-        // Notify room
-        // --------------------------------------------------------
 
         if (becameOffline &&
             presence is not null)
@@ -830,7 +1045,6 @@ public sealed class ChatHub(
                     presence.UserName,
                     false);
         }
-
 
         await base.OnDisconnectedAsync(
             exception);

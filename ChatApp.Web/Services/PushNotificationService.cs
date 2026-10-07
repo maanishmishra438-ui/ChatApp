@@ -47,143 +47,197 @@ public sealed class PushNotificationService(
         string sender,
         ChatMessage message)
     {
-        if (string.IsNullOrWhiteSpace(roomCode))
+        try
         {
-            logger.LogWarning(
-                "Push notification skipped: room code is empty.");
+            if (string.IsNullOrWhiteSpace(roomCode))
+            {
+                logger.LogWarning(
+                    "Push notification skipped: room code is empty.");
 
-            return;
-        }
+                return;
+            }
 
-        if (string.IsNullOrWhiteSpace(sender))
-        {
-            logger.LogWarning(
-                "Push notification skipped: sender is empty.");
+            if (string.IsNullOrWhiteSpace(sender))
+            {
+                logger.LogWarning(
+                    "Push notification skipped: sender is empty.");
 
-            return;
-        }
-
-
-        // --------------------------------------------------------
-        // GET SUBSCRIBED DEVICES
-        // EXCLUDE THE SENDER
-        // --------------------------------------------------------
-
-        var subscriptions =
-            await chatService.GetPushSubscriptionsAsync(
-                roomCode,
-                sender);
+                return;
+            }
 
 
-        if (subscriptions.Count == 0)
-        {
-            logger.LogDebug(
-                "No push subscriptions found for room {RoomCode}.",
-                roomCode);
+            // --------------------------------------------------------
+            // GET SUBSCRIBED DEVICES
+            // EXCLUDE THE SENDER
+            // --------------------------------------------------------
 
-            return;
-        }
+            var subscriptions =
+                await chatService.GetPushSubscriptionsAsync(
+                    roomCode,
+                    sender);
 
 
-        // --------------------------------------------------------
-        // CREATE PAYLOAD ONCE
-        // --------------------------------------------------------
+            if (subscriptions.Count == 0)
+            {
+                logger.LogDebug(
+                    "No push subscriptions found for room {RoomCode}.",
+                    roomCode);
 
-        var payload =
-            JsonSerializer.Serialize(
-                new
-                {
-                    title =
-                        $"💬 {sender}",
+                return;
+            }
 
-                    body =
-                        string.IsNullOrWhiteSpace(message.Text)
-                            ? "New message"
-                            : message.Text,
 
-                    data =
-                        new
-                        {
-                            roomCode,
+            // --------------------------------------------------------
+            // CREATE PAYLOAD
+            // --------------------------------------------------------
 
-                            messageId =
-                                message.Id,
+            var payload =
+                JsonSerializer.Serialize(
+                    new
+                    {
+                        title =
+                            $"💬 {sender}",
 
-                            userName =
-                                sender
-                        },
+                        body =
+                            string.IsNullOrWhiteSpace(message.Text)
+                                ? "New message"
+                                : message.Text,
 
-                    actions =
-                        new[]
-                        {
+                        data =
                             new
                             {
-                                action = "open",
-                                title = "Open chat"
+                                roomCode,
+
+                                messageId =
+                                    message.Id,
+
+                                userName =
+                                    sender
                             },
 
-                            new
+                        actions =
+                            new[]
                             {
-                                action = "like",
-                                title = "❤️ Like"
+                                new
+                                {
+                                    action = "open",
+                                    title = "Open chat"
+                                },
+
+                                new
+                                {
+                                    action = "like",
+                                    title = "❤️ Like"
+                                }
                             }
-                        }
-                });
+                    });
 
 
-        // --------------------------------------------------------
-        // CREATE PUSH MESSAGE ONCE
-        // --------------------------------------------------------
+            // --------------------------------------------------------
+            // CREATE PUSH MESSAGE
+            // --------------------------------------------------------
 
-        var pushMessage =
-            new PushMessage(payload)
+            var pushMessage =
+                new PushMessage(payload)
+                {
+                    // Push remains valid for 5 minutes.
+                    // This does NOT delay delivery.
+                    TimeToLive = 300
+                };
+
+
+            // --------------------------------------------------------
+            // CREATE VAPID AUTHENTICATION
+            // --------------------------------------------------------
+
+            using var vapidAuthentication =
+                new VapidAuthentication(
+                    publicKey,
+                    privateKey)
+                {
+                    Subject = subject
+                };
+
+
+            // --------------------------------------------------------
+            // CREATE PUSH CLIENT
+            // --------------------------------------------------------
+
+            var pushClient =
+                new PushServiceClient();
+
+
+            // --------------------------------------------------------
+            // SEND TO ALL DEVICES
+            // --------------------------------------------------------
+
+            var pushTasks =
+                subscriptions
+                    .Select(
+                        subscription =>
+                            SendToSubscriptionAsync(
+                                pushClient,
+                                subscription,
+                                pushMessage,
+                                vapidAuthentication,
+                                roomCode))
+                    .ToArray();
+
+
+            try
             {
-                // Message remains valid for 5 minutes.
-                // This is NOT a delivery delay.
-                TimeToLive = 300
-            };
-
-
-        // --------------------------------------------------------
-        // CREATE VAPID AUTHENTICATION ONCE
-        // --------------------------------------------------------
-
-        using var vapidAuthentication =
-            new VapidAuthentication(
-                publicKey,
-                privateKey)
+                await Task.WhenAll(pushTasks);
+            }
+            catch (OperationCanceledException ex)
             {
-                Subject = subject
-            };
+                // A cancelled push request must NEVER
+                // affect normal chat/photo functionality.
+
+                logger.LogWarning(
+                    ex,
+                    "Push notification request was cancelled for room {RoomCode}.",
+                    roomCode);
+            }
+            catch (Exception ex)
+            {
+                // Push failure must NEVER break chat/photo sending.
+
+                logger.LogWarning(
+                    ex,
+                    "Push notification processing failed for room {RoomCode}.",
+                    roomCode);
+            }
 
 
-        // --------------------------------------------------------
-        // SEND TO ALL DEVICES IN PARALLEL
-        // --------------------------------------------------------
+            logger.LogDebug(
+                "Push notification processing completed for room {RoomCode}. Devices: {Count}",
+                roomCode,
+                subscriptions.Count);
+        }
+        catch (OperationCanceledException ex)
+        {
+            // --------------------------------------------------------
+            // IMPORTANT:
+            // Push cancellation must never escape this service.
+            // --------------------------------------------------------
 
-        var pushClient =
-            new PushServiceClient();
+            logger.LogWarning(
+                ex,
+                "Push notification operation was cancelled for room {RoomCode}.",
+                roomCode);
+        }
+        catch (Exception ex)
+        {
+            // --------------------------------------------------------
+            // IMPORTANT:
+            // Push failure must never break normal chat.
+            // --------------------------------------------------------
 
-
-        var pushTasks =
-            subscriptions.Select(
-                subscription =>
-                    SendToSubscriptionAsync(
-                        pushClient,
-                        subscription,
-                        pushMessage,
-                        vapidAuthentication,
-                        roomCode))
-            .ToArray();
-
-
-        await Task.WhenAll(pushTasks);
-
-
-        logger.LogDebug(
-            "Push notification processing completed for room {RoomCode}. Devices: {Count}",
-            roomCode,
-            subscriptions.Count);
+            logger.LogWarning(
+                ex,
+                "Push notification service failed for room {RoomCode}.",
+                roomCode);
+        }
     }
 
 
@@ -200,6 +254,20 @@ public sealed class PushNotificationService(
     {
         try
         {
+            if (subscription is null)
+            {
+                logger.LogWarning(
+                    "Skipping null push subscription for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+
+
+            // --------------------------------------------------------
+            // VALIDATE ENDPOINT
+            // --------------------------------------------------------
+
             if (string.IsNullOrWhiteSpace(
                     subscription.Endpoint))
             {
@@ -211,9 +279,34 @@ public sealed class PushNotificationService(
             }
 
 
-            // ----------------------------------------------------
+            // --------------------------------------------------------
+            // VALIDATE ENCRYPTION KEYS
+            // --------------------------------------------------------
+
+            if (string.IsNullOrWhiteSpace(
+                    subscription.P256dh))
+            {
+                logger.LogWarning(
+                    "Skipping push subscription with empty P256dh key for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                    subscription.Auth))
+            {
+                logger.LogWarning(
+                    "Skipping push subscription with empty Auth key for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+
+
+            // --------------------------------------------------------
             // CREATE BROWSER PUSH SUBSCRIPTION
-            // ----------------------------------------------------
+            // --------------------------------------------------------
 
             var webPushSubscription =
                 new Lib.Net.Http.WebPush.PushSubscription
@@ -223,9 +316,9 @@ public sealed class PushNotificationService(
                 };
 
 
-            // ----------------------------------------------------
+            // --------------------------------------------------------
             // BROWSER ENCRYPTION KEYS
-            // ----------------------------------------------------
+            // --------------------------------------------------------
 
             webPushSubscription.Keys =
                 new Dictionary<string, string>
@@ -238,33 +331,82 @@ public sealed class PushNotificationService(
                 };
 
 
-            // ----------------------------------------------------
+            // --------------------------------------------------------
             // DELIVER PUSH
-            // ----------------------------------------------------
+            // --------------------------------------------------------
 
-            await pushClient
-                .RequestPushMessageDeliveryAsync(
-                    webPushSubscription,
-                    pushMessage,
-                    vapidAuthentication);
+            try
+            {
+                await pushClient
+                    .RequestPushMessageDeliveryAsync(
+                        webPushSubscription,
+                        pushMessage,
+                        vapidAuthentication);
+            }
+            catch (OperationCanceledException ex)
+            {
+                // ----------------------------------------------------
+                // IMPORTANT:
+                // A cancelled/timeout push request is isolated.
+                // It must NOT stop other devices.
+                // ----------------------------------------------------
 
+                logger.LogWarning(
+                    ex,
+                    "Push delivery was cancelled for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+            catch (PushServiceClientException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Push provider rejected delivery for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "HTTP error while sending push notification for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Unexpected push notification error for room {RoomCode}.",
+                    roomCode);
+
+                return;
+            }
+
+
+            // --------------------------------------------------------
+            // SUCCESS
+            // --------------------------------------------------------
 
             logger.LogDebug(
                 "Push notification sent successfully for room {RoomCode}.",
                 roomCode);
         }
-        catch (PushServiceClientException ex)
+        catch (OperationCanceledException ex)
         {
             logger.LogWarning(
                 ex,
-                "Push provider rejected delivery for room {RoomCode}.",
+                "Push notification operation cancelled for room {RoomCode}.",
                 roomCode);
         }
         catch (Exception ex)
         {
             logger.LogWarning(
                 ex,
-                "Unexpected push notification error for room {RoomCode}.",
+                "Unexpected push notification failure for room {RoomCode}.",
                 roomCode);
         }
     }

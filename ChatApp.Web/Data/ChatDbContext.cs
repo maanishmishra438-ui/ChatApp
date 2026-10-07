@@ -162,6 +162,36 @@ public sealed class ChatMessage
 
 
     // ============================================================
+    // MEDIA / PHOTO
+    // ============================================================
+
+    // Text or Photo
+    public string MessageType { get; set; } =
+        "Text";
+
+    // Supabase Storage object path
+    public string? MediaPath { get; set; }
+
+    // image/jpeg, image/png, image/webp
+    public string? MediaContentType { get; set; }
+
+    // Original uploaded file name
+    public string? MediaFileName { get; set; }
+
+    // File size in bytes
+    public long? MediaSize { get; set; }
+
+    // Normal / Timed / ViewOnce
+    public string? PhotoMode { get; set; }
+
+    // Timed photo expiry
+    public DateTime? ExpiresAt { get; set; }
+
+    // View Once first-open timestamp
+    public DateTime? ViewedAt { get; set; }
+
+
+    // ============================================================
     // READ STATUS
     // ============================================================
 

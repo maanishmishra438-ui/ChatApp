@@ -7886,3 +7886,334 @@ a:focus-visible {
         transition: none !important;
     }
 }
+
+/* ============================================================
+   PHOTO PREVIEW
+   ============================================================ */
+
+.photo-preview-card {
+    width: min(360px, calc(100vw - 40px));
+    margin: 0 12px 10px;
+    padding: 8px;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    overflow: hidden;
+}
+
+.photo-preview-image {
+    display: block;
+    width: auto;
+    max-width: 220px;
+    max-height: 160px;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto;
+    border-radius: 11px;
+    background: #f4f4f4;
+}
+
+
+/* ============================================================
+   PHOTO MODE SELECTOR
+   ============================================================ */
+
+.photo-mode-section {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 12px;
+    background: #f7f7f8;
+}
+
+.photo-mode-title {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.photo-mode-options {
+    display: flex;
+    gap: 7px;
+}
+
+.photo-mode-option {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(0,0,0,.10);
+    background: #fff;
+    color: #333;
+    border-radius: 11px;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+    .photo-mode-option:hover {
+        transform: translateY(-1px);
+    }
+
+    .photo-mode-option.active {
+        border-color: #111;
+        background: #111;
+        color: #fff;
+    }
+
+.photo-mode-option-main {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.photo-mode-option-description {
+    display: block;
+    margin-top: 3px;
+    padding-left: 24px;
+    font-size: 10px;
+    opacity: .65;
+}
+
+.photo-mode-option.active .photo-mode-option-description {
+    opacity: .78;
+}
+
+
+/* ============================================================
+   PHOTO MESSAGE
+   ============================================================ */
+
+.photo-message-card {
+    width: min(280px, 100%);
+    overflow: hidden;
+    border-radius: 13px;
+    background: rgba(0,0,0,.04);
+}
+
+.photo-message-image {
+    display: block;
+    width: auto;
+    max-width: 240px;
+    max-height: 260px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .18s ease, opacity .18s ease;
+}
+
+    .photo-message-image:hover {
+        opacity: .95;
+    }
+
+.photo-message-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 9px;
+}
+
+.photo-message-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.photo-message-title {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.photo-message-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    opacity: .65;
+}
+
+.photo-download-button {
+    border: 0;
+    border-radius: 8px;
+    padding: 6px 9px;
+    background: #111;
+    color: #fff;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+    .photo-download-button:hover {
+        opacity: .88;
+    }
+
+
+/* ============================================================
+   VIEW ONCE CARD
+   ============================================================ */
+
+.view-once-photo-card {
+    width: min(280px, 100%);
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    border-radius: 15px;
+    background: linear-gradient( 145deg, #171717, #303030 );
+    color: #fff;
+}
+
+.view-once-photo-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 7px;
+}
+
+.view-once-photo-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    font-size: 24px;
+}
+
+.view-once-photo-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.view-once-photo-subtitle {
+    font-size: 11px;
+    opacity: .7;
+}
+
+.view-once-open-button {
+    margin-top: 5px;
+    border: 0;
+    border-radius: 9px;
+    padding: 8px 14px;
+    background: #fff;
+    color: #111;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+    .view-once-open-button:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+
+/* ============================================================
+   VIEW ONCE MODAL
+   ============================================================ */
+
+.photo-viewer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0,0,0,.88);
+}
+
+.photo-viewer {
+    position: relative;
+    width: min(900px, 100%);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.photo-viewer-image {
+    display: block;
+    max-width: 100%;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.photo-viewer-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.photo-viewer-loading {
+    color: #fff;
+    font-size: 14px;
+}
+
+.photo-viewer-error {
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 14px;
+    background: #fff;
+    color: #222;
+    text-align: center;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .photo-preview-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .photo-preview-actions {
+        width: 100%;
+    }
+
+    .photo-cancel-button,
+    .photo-send-button {
+        flex: 1;
+    }
+
+    .photo-mode-options {
+        flex-direction: column;
+    }
+
+    .photo-message-card {
+        width: min(270px, 100%);
+    }
+
+    .photo-viewer-backdrop {
+        padding: 10px;
+    }
+
+    .photo-viewer-close {
+        top: 4px;
+        right: 4px;
+    }
+}

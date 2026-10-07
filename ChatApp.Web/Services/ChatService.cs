@@ -172,7 +172,7 @@ public sealed class ChatService(
 
 
     // ============================================================
-    // SAVE MESSAGE
+    // SAVE TEXT MESSAGE
     // ============================================================
 
     public async Task<ChatMessage> SaveMessageAsync(
@@ -320,6 +320,457 @@ public sealed class ChatService(
             message);
 
         await db.SaveChangesAsync();
+
+        return message;
+    }
+
+
+    // ============================================================
+    // SAVE PHOTO MESSAGE
+    // ============================================================
+
+    public async Task<ChatMessage> SavePhotoAsync(
+        string code,
+        string sender,
+        string mediaPath,
+        string mediaContentType,
+        string mediaFileName,
+        long mediaSize,
+        string photoMode = "Normal",
+        long? replyToMessageId = null)
+    {
+        code =
+            code.Trim()
+                .ToLowerInvariant();
+
+        sender =
+            sender.Trim();
+
+        mediaPath =
+            mediaPath.Trim();
+
+        mediaContentType =
+            mediaContentType.Trim();
+
+        mediaFileName =
+            mediaFileName.Trim();
+
+        photoMode =
+            photoMode.Trim();
+
+
+        // --------------------------------------------------------
+        // BASIC VALIDATION
+        // --------------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(sender))
+        {
+            throw new ArgumentException(
+                "Name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(mediaPath))
+        {
+            throw new ArgumentException(
+                "Photo path is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(mediaContentType))
+        {
+            throw new ArgumentException(
+                "Photo content type is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(mediaFileName))
+        {
+            throw new ArgumentException(
+                "Photo file name is required.");
+        }
+
+        if (mediaSize <= 0)
+        {
+            throw new ArgumentException(
+                "Photo file is empty.");
+        }
+
+
+        // --------------------------------------------------------
+        // PHOTO MODE
+        // --------------------------------------------------------
+        //
+        // Timed is intentionally not enabled yet.
+        // --------------------------------------------------------
+
+        if (!photoMode.Equals(
+                "Normal",
+                StringComparison.OrdinalIgnoreCase) &&
+            !photoMode.Equals(
+                "ViewOnce",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "Invalid photo mode.");
+        }
+
+        photoMode =
+            photoMode.Equals(
+                "ViewOnce",
+                StringComparison.OrdinalIgnoreCase)
+                    ? "ViewOnce"
+                    : "Normal";
+
+
+        // --------------------------------------------------------
+        // LIMITS
+        // --------------------------------------------------------
+
+        if (sender.Length > 40)
+        {
+            sender =
+                sender[..40];
+        }
+
+        if (mediaPath.Length > 1000)
+        {
+            throw new ArgumentException(
+                "Photo path is too long.");
+        }
+
+        if (mediaFileName.Length > 255)
+        {
+            mediaFileName =
+                mediaFileName[..255];
+        }
+
+        if (mediaContentType.Length > 100)
+        {
+            throw new ArgumentException(
+                "Invalid photo content type.");
+        }
+
+
+        // --------------------------------------------------------
+        // CONTENT TYPE VALIDATION
+        // --------------------------------------------------------
+
+        if (!mediaContentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "Only image files are allowed.");
+        }
+
+
+        // --------------------------------------------------------
+        // ROOM VALIDATION
+        // --------------------------------------------------------
+
+        await using var db =
+            await factory.CreateDbContextAsync();
+
+        var roomExists =
+            await db.Rooms.AnyAsync(
+                x =>
+                    x.Code == code);
+
+        if (!roomExists)
+        {
+            throw new InvalidOperationException(
+                "Room not found.");
+        }
+
+
+        // --------------------------------------------------------
+        // REPLY INFORMATION
+        // --------------------------------------------------------
+
+        string? replySender =
+            null;
+
+        string? replyText =
+            null;
+
+        if (replyToMessageId.HasValue)
+        {
+            var repliedMessage =
+                await db.Messages
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                replyToMessageId.Value &&
+                            x.RoomCode ==
+                                code);
+
+            if (repliedMessage is not null &&
+                !repliedMessage.IsDeleted)
+            {
+                replySender =
+                    repliedMessage.Sender;
+
+                replyText =
+                    repliedMessage.Text;
+
+                if (replySender.Length > 40)
+                {
+                    replySender =
+                        replySender[..40];
+                }
+
+                if (replyText.Length > 500)
+                {
+                    replyText =
+                        replyText[..500] +
+                        "…";
+                }
+            }
+            else
+            {
+                replyToMessageId =
+                    null;
+            }
+        }
+
+
+        // --------------------------------------------------------
+        // CREATE PHOTO MESSAGE
+        // --------------------------------------------------------
+
+        var message =
+            new ChatMessage
+            {
+                RoomCode =
+                    code,
+
+                Sender =
+                    sender,
+
+                Text =
+                    "📷 Photo",
+
+                SentAt =
+                    DateTime.UtcNow,
+
+                // MEDIA
+                MessageType =
+                    "Photo",
+
+                MediaPath =
+                    mediaPath,
+
+                MediaContentType =
+                    mediaContentType,
+
+                MediaFileName =
+                    mediaFileName,
+
+                MediaSize =
+                    mediaSize,
+
+                // NORMAL / VIEW ONCE
+                PhotoMode =
+                    photoMode,
+
+                // Timed photo is not implemented yet.
+                ExpiresAt =
+                    null,
+
+                // ViewOnce starts unopened.
+                ViewedAt =
+                    null,
+
+                // READ
+                IsRead =
+                    false,
+
+                ReadAt =
+                    null,
+
+                // REPLY
+                ReplyToMessageId =
+                    replyToMessageId,
+
+                ReplyToSender =
+                    replySender,
+
+                ReplyToText =
+                    replyText,
+
+                // DELETE
+                IsDeleted =
+                    false,
+
+                DeletedAt =
+                    null,
+
+                DeletedBy =
+                    null
+            };
+
+        db.Messages.Add(
+            message);
+
+        await db.SaveChangesAsync();
+
+        return message;
+    }
+
+
+    // ============================================================
+    // CLAIM VIEW ONCE PHOTO
+    // ============================================================
+    //
+    // This is the actual server-side protection.
+    //
+    // The frontend cannot simply change ViewedAt and bypass this.
+    //
+    // Only one request can change:
+    //
+    // ViewedAt = NULL
+    //
+    // into:
+    //
+    // ViewedAt = current UTC time
+    //
+    // If two requests arrive at almost exactly the same time,
+    // only one will affect one database row.
+    // ============================================================
+
+    public async Task<ChatMessage?> ClaimViewOncePhotoAsync(
+        string roomCode,
+        long messageId,
+        string viewerName)
+    {
+        roomCode =
+            roomCode.Trim()
+                .ToLowerInvariant();
+
+        viewerName =
+            viewerName.Trim();
+
+
+        if (string.IsNullOrWhiteSpace(roomCode) ||
+            messageId <= 0 ||
+            string.IsNullOrWhiteSpace(viewerName))
+        {
+            return null;
+        }
+
+
+        await using var db =
+            await factory.CreateDbContextAsync();
+
+
+        // --------------------------------------------------------
+        // Get current message
+        // --------------------------------------------------------
+
+        var message =
+            await db.Messages
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Id == messageId &&
+                        x.RoomCode == roomCode);
+
+
+        if (message is null)
+        {
+            return null;
+        }
+
+
+        // --------------------------------------------------------
+        // MESSAGE VALIDATION
+        // --------------------------------------------------------
+
+        if (message.IsDeleted)
+        {
+            return null;
+        }
+
+
+        if (!string.Equals(
+                message.MessageType,
+                "Photo",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+
+        if (!string.Equals(
+                message.PhotoMode,
+                "ViewOnce",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+
+        if (string.IsNullOrWhiteSpace(
+                message.MediaPath))
+        {
+            return null;
+        }
+
+
+        // --------------------------------------------------------
+        // SENDER CANNOT CONSUME HIS OWN VIEW ONCE PHOTO
+        // --------------------------------------------------------
+
+        if (string.Equals(
+                message.Sender,
+                viewerName,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+
+        // --------------------------------------------------------
+        // ATOMIC CLAIM
+        // --------------------------------------------------------
+        //
+        // The WHERE ViewedAt == null is extremely important.
+        //
+        // Request 1:
+        //     ViewedAt NULL → updates row → success
+        //
+        // Request 2:
+        //     ViewedAt already set → 0 rows → failure
+        // --------------------------------------------------------
+
+        var now =
+            DateTime.UtcNow;
+
+        var affected =
+            await db.Messages
+                .Where(
+                    x =>
+                        x.Id == messageId &&
+                        x.RoomCode == roomCode &&
+                        x.PhotoMode == "ViewOnce" &&
+                        x.ViewedAt == null &&
+                        !x.IsDeleted)
+                .ExecuteUpdateAsync(
+                    setters =>
+                        setters.SetProperty(
+                            x =>
+                                x.ViewedAt,
+                            now));
+
+
+        if (affected != 1)
+        {
+            return null;
+        }
+
+
+        // Keep returned object in sync with database.
+        message.ViewedAt =
+            now;
+
 
         return message;
     }
@@ -854,7 +1305,8 @@ public sealed class ChatService(
             return false;
         }
 
-        reaction = reaction.Trim();
+        reaction =
+            reaction.Trim();
 
         // A reaction should be short enough to represent one emoji or
         // one normal emoji sequence (skin tone, ZWJ, variation selector,
@@ -864,11 +1316,13 @@ public sealed class ChatService(
             return false;
         }
 
-        var hasEmojiBase = false;
+        var hasEmojiBase =
+            false;
 
         foreach (var rune in reaction.EnumerateRunes())
         {
-            var value = rune.Value;
+            var value =
+                rune.Value;
 
             // Unicode emoji blocks commonly used by modern emoji pickers.
             var isEmojiBase =
@@ -887,7 +1341,9 @@ public sealed class ChatService(
 
             if (isEmojiBase)
             {
-                hasEmojiBase = true;
+                hasEmojiBase =
+                    true;
+
                 continue;
             }
 
