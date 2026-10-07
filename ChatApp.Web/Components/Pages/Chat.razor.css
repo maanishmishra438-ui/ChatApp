@@ -8217,3 +8217,245 @@ a:focus-visible {
         right: 4px;
     }
 }
+
+/* =========================================================
+   MOBILE PHOTO PREVIEW FIX
+   PC / DESKTOP KO TOUCH NAHI KARNA
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    /* Photo preview card */
+    .photo-preview-card {
+        width: calc(100% - 16px);
+        margin-left: 8px;
+        margin-right: 8px;
+        padding: 10px;
+        box-sizing: border-box;
+        overflow: visible;
+    }
+
+
+    /* Selected photo */
+    .photo-preview-image {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 210px;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+
+
+    /* Unlimited / View Once */
+    .photo-mode-picker {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        padding: 9px 0 0;
+        box-sizing: border-box;
+    }
+
+
+    .photo-mode-option {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 7px;
+        box-sizing: border-box;
+        border-radius: 10px;
+    }
+
+
+    .photo-mode-title {
+        font-size: 12px;
+        line-height: 16px;
+    }
+
+
+    .photo-mode-subtitle {
+        font-size: 9px;
+        line-height: 12px;
+        margin-top: 2px;
+    }
+
+
+    /* =====================================================
+       IMPORTANT:
+       Mobile footer becomes full width
+       ===================================================== */
+
+    .photo-preview-footer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 9px;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+
+
+    /* File name + size */
+    .photo-preview-info {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+
+    .photo-preview-name {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+
+
+    .photo-preview-size {
+        font-size: 10px;
+    }
+
+
+    /* =====================================================
+       CANCEL + SEND PHOTO
+       ALWAYS FULL AVAILABLE WIDTH
+       ===================================================== */
+
+    .photo-preview-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1.35fr;
+        gap: 8px;
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+
+
+    .photo-cancel-button,
+    .photo-send-button {
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        margin: 0;
+        padding: 10px 6px;
+        box-sizing: border-box;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    .photo-send-button {
+        min-width: 0;
+        overflow: visible;
+    }
+}
+
+
+/* =========================================================
+   SMALL PHONE - 380px OR LESS
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+    .photo-preview-card {
+        width: calc(100% - 12px);
+        margin-left: 6px;
+        margin-right: 6px;
+        padding: 8px;
+    }
+
+
+    .photo-preview-image {
+        max-height: 180px;
+    }
+
+
+    .photo-mode-picker {
+        gap: 5px;
+    }
+
+
+    .photo-mode-option {
+        padding: 8px 5px;
+    }
+
+
+    .photo-mode-title {
+        font-size: 11px;
+        line-height: 15px;
+    }
+
+
+    .photo-mode-subtitle {
+        font-size: 8px;
+        line-height: 11px;
+    }
+
+
+    .photo-preview-actions {
+        grid-template-columns: 1fr 1.4fr;
+        gap: 6px;
+    }
+
+
+    .photo-cancel-button,
+    .photo-send-button {
+        min-height: 40px;
+        padding: 9px 4px;
+        font-size: 12px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONE - 340px OR LESS
+   ========================================================= */
+
+@media (max-width: 340px) {
+
+    .photo-preview-card {
+        width: calc(100% - 10px);
+        margin-left: 5px;
+        margin-right: 5px;
+        padding: 7px;
+    }
+
+
+    .photo-preview-image {
+        max-height: 160px;
+    }
+
+
+    .photo-mode-title {
+        font-size: 10px;
+    }
+
+
+    .photo-mode-subtitle {
+        font-size: 8px;
+    }
+
+
+    .photo-preview-actions {
+        grid-template-columns: 1fr 1.45fr;
+        gap: 5px;
+    }
+
+
+    .photo-cancel-button,
+    .photo-send-button {
+        min-height: 39px;
+        font-size: 11px;
+        padding: 8px 3px;
+    }
+}
