@@ -1,5 +1,6 @@
 @page "/chat/{RoomCode}"
 
+
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Forms
@@ -9,6 +10,8 @@
 @inject NavigationManager Navigation
 @inject ChatApp.Web.Services.ChatService ChatService
 @inject IJSRuntime JS
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment HostEnvironment
 
 @implements IAsyncDisposable
 
