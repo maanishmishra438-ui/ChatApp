@@ -2,6 +2,7 @@
 
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.JSInterop
 @using ChatApp.Web.Data
 
@@ -10,6 +11,297 @@
 @inject IJSRuntime JS
 
 @implements IAsyncDisposable
+
+<style>
+    .photo-composer-button {
+        position: relative;
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        transition: background .18s ease, transform .18s ease;
+    }
+
+        .photo-composer-button:hover {
+            background: rgba(0, 0, 0, .06);
+            transform: translateY(-1px);
+        }
+
+    .photo-composer-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .photo-preview-card {
+        margin: 0 12px 10px;
+        padding: 10px;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+
+    .photo-preview-image {
+        display: block;
+        width: auto;
+        max-width: 280px;
+        max-height: 220px;
+        height: auto;
+        object-fit: contain;
+        margin: 0 auto;
+        border-radius: 12px;
+        background: #f5f5f5;
+    }
+
+    .photo-preview-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .photo-preview-info {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .photo-preview-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .photo-preview-size {
+        font-size: 12px;
+        opacity: .65;
+    }
+
+    .photo-preview-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .photo-cancel-button,
+    .photo-send-button {
+        border: 0;
+        border-radius: 10px;
+        padding: 9px 14px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .photo-cancel-button {
+        background: #f1f1f1;
+    }
+
+    .photo-send-button {
+        background: #111;
+        color: #fff;
+    }
+
+        .photo-send-button:disabled,
+        .photo-cancel-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+    .photo-mode-picker {
+        display: flex;
+        gap: 8px;
+        padding: 10px 12px 0;
+    }
+
+    .photo-mode-option {
+        flex: 1;
+        border: 1px solid rgba(0,0,0,.12);
+        background: #fff;
+        border-radius: 12px;
+        padding: 9px 10px;
+        cursor: pointer;
+        text-align: left;
+        transition: .18s ease;
+    }
+
+        .photo-mode-option.active {
+            border-color: #111827;
+            box-shadow: 0 0 0 2px rgba(17,24,39,.08);
+        }
+
+    .photo-mode-title {
+        display: block;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .photo-mode-subtitle {
+        display: block;
+        font-size: 11px;
+        opacity: .62;
+        margin-top: 2px;
+    }
+
+    .photo-view-once-card {
+        width: min(300px,100%);
+        min-height: 170px;
+        border-radius: 16px;
+        background: linear-gradient(135deg,#111827,#374151);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        border: 0;
+        padding: 22px;
+    }
+
+    .photo-view-once-icon {
+        font-size: 34px;
+    }
+
+    .photo-view-once-title {
+        font-weight: 800;
+    }
+
+    .photo-view-once-subtitle {
+        font-size: 12px;
+        opacity: .75;
+    }
+
+    .photo-message-image {
+        display: block;
+        width: auto;
+        max-width: 240px;
+        max-height: 300px;
+        height: auto;
+        object-fit: contain;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: transform .18s ease, opacity .18s ease;
+    }
+
+        .photo-message-image:hover {
+            opacity: .95;
+        }
+
+    .photo-download-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 190px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(0,0,0,.06);
+    }
+
+    .photo-download-icon {
+        font-size: 28px;
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+
+    .photo-download-title {
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .photo-download-subtitle {
+        margin-top: 2px;
+        font-size: 11px;
+        opacity: .65;
+    }
+
+    .photo-download-button {
+        display: inline-flex;
+        margin-top: 9px;
+        padding: 7px 11px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 12px;
+        background: rgba(0,0,0,.07);
+        color: inherit;
+    }
+
+    .photo-viewer-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(0,0,0,.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .photo-viewer-image {
+        max-width: 95vw;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 12px;
+    }
+
+    .photo-viewer-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        font-size: 26px;
+        cursor: pointer;
+    }
+
+    .photo-message-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(0,0,0,.04);
+    }
+
+    .photo-message-icon {
+        font-size: 24px;
+    }
+
+    .photo-message-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .photo-message-title {
+        font-weight: 600;
+    }
+
+    .photo-message-name {
+        font-size: 12px;
+        opacity: .65;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
 
 <PageTitle>Private Chat</PageTitle>
 
@@ -607,9 +899,36 @@ else
                                             </strong>
                                         }
 
-                                        <div class="message-text">
-                                            @message.Text
-                                        </div>
+                                        @if (message.MessageType.Equals("Photo", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            @if (string.Equals(message.PhotoMode, "ViewOnce", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <button type="button" class="photo-view-once-card" @onclick="() => OpenViewOncePhoto(message)">
+                                                    <span class="photo-view-once-icon">👁️</span>
+                                                    <span class="photo-view-once-title">View once photo</span>
+                                                    <span class="photo-view-once-subtitle">Tap to open. It can only be viewed once.</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <div class="photo-download-card">
+                                                    <span class="photo-download-icon">📷</span>
+                                                    <span class="photo-download-title">Photo</span>
+                                                    <span class="photo-download-subtitle">Download to view</span>
+
+                                                    @if (!string.IsNullOrWhiteSpace(message.MediaFileName))
+                                                    {
+                                                        <a class="photo-download-button" href="@GetPhotoUrl(message, true)" download="@message.MediaFileName">⬇ Download</a>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="message-text">
+                                                @message.Text
+                                            </div>
+                                        }
                                     }
 
 
@@ -842,9 +1161,70 @@ else
                 }
 
 
+                @if (!string.IsNullOrWhiteSpace(photoError))
+                {
+                    <div class="toast" style="position:relative; margin:0 12px 8px;">
+                        @photoError
+                    </div>
+                }
+
+                @if (selectedPhoto is not null && !string.IsNullOrWhiteSpace(selectedPhotoPreviewUrl))
+                {
+                    <div class="photo-preview-card">
+                        <img class="photo-preview-image"
+                             src="@selectedPhotoPreviewUrl"
+                             alt="Selected photo preview" />
+
+                        <div class="photo-mode-picker">
+                            <button type="button" class="photo-mode-option @(selectedPhotoMode == "Normal" ? "active" : "")" @onclick='() => selectedPhotoMode = "Normal"' disabled="@photoSending">
+                                <span class="photo-mode-title">∞ View unlimited</span>
+                                <span class="photo-mode-subtitle">Receiver can open and download it.</span>
+                            </button>
+                            <button type="button" class="photo-mode-option @(selectedPhotoMode == "ViewOnce" ? "active" : "")" @onclick='() => selectedPhotoMode = "ViewOnce"' disabled="@photoSending">
+                                <span class="photo-mode-title">👁️ View once</span>
+                                <span class="photo-mode-subtitle">Receiver can open it only once.</span>
+                            </button>
+                        </div>
+
+                        <div class="photo-preview-footer">
+                            <div class="photo-preview-info">
+                                <span class="photo-preview-name">@selectedPhoto.Name</span>
+                                <span class="photo-preview-size">@FormatFileSize(selectedPhoto.Size)</span>
+                            </div>
+
+                            <div class="photo-preview-actions">
+                                <button type="button"
+                                        class="photo-cancel-button"
+                                        @onclick="CancelPhotoSelection"
+                                        disabled="@photoSending">
+                                    Cancel
+                                </button>
+
+                                <button type="button"
+                                        class="photo-send-button"
+                                        @onclick="SendPhoto"
+                                        disabled="@(!connected || photoSending)">
+                                    @(photoSending ? "Sending..." : "Send photo")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+
                 <!-- COMPOSER -->
 
                 <footer class="composer">
+
+                    <label class="photo-composer-button"
+                           title="Photo"
+                           aria-label="Select photo">
+                        📷
+                        <InputFile id="photoInput"
+                                   OnChange="HandlePhotoSelected"
+                                   accept="image/jpeg,image/png,image/gif,image/webp"
+                                   class="photo-composer-input" />
+                    </label>
 
                     <button type="button"
                             class="composer-emoji-button composer-emoji-desktop"
@@ -1273,7 +1653,7 @@ else
 
     <!-- DELETE MODAL -->
     @if (showDeleteModal &&
-                                     selectedMessage is not null)
+                                                             selectedMessage is not null)
     {
         <div class="delete-modal-backdrop"
              @onclick="CloseDeleteModal">
@@ -1373,6 +1753,15 @@ else
 }
 
 
+@if (photoViewerMessage is not null && !string.IsNullOrWhiteSpace(photoViewerUrl))
+{
+    <div class="photo-viewer-overlay" @onclick="ClosePhotoViewer">
+        <button type="button" class="photo-viewer-close" @onclick:stopPropagation="true" @onclick="ClosePhotoViewer">×</button>
+        <img class="photo-viewer-image" src="@photoViewerUrl" alt="Photo" @onclick:stopPropagation="true" />
+    </div>
+}
+
+
 @code {
 
     // ============================================================
@@ -1411,6 +1800,8 @@ else
         dotNetReference;
 
     private IJSObjectReference? pushModule;
+
+    private IJSObjectReference? photoModule;
 
 
     // ============================================================
@@ -1563,6 +1954,26 @@ else
     private string joinName = string.Empty;
 
     private string draft = string.Empty;
+
+    // ============================================================
+    // PHOTO STATE
+    // ============================================================
+
+    private const long MaxPhotoSize = 10 * 1024 * 1024;
+
+    private IBrowserFile? selectedPhoto;
+
+    private string? selectedPhotoPreviewUrl;
+
+    private bool photoSending;
+
+    private string? photoError;
+
+    private string selectedPhotoMode = "Normal";
+
+    private MessageVm? photoViewerMessage;
+
+    private string? photoViewerUrl;
 
     private string? joinError;
 
@@ -2091,7 +2502,16 @@ else
                     item.ReplyToMessageId,
                     item.ReplyToSender,
                     item.ReplyToText,
-                    item.IsDeleted));
+                    item.IsDeleted,
+                    null,
+                    item.MessageType,
+                    item.MediaPath,
+                    item.MediaContentType,
+                    item.MediaFileName,
+                    item.MediaSize,
+                    item.PhotoMode,
+                    item.ExpiresAt,
+                    item.ViewedAt));
         }
 
 
@@ -2617,34 +3037,73 @@ else
 
         hub.Reconnected += async _ =>
         {
-            if (hub is null)
+            if (hub is null ||
+                string.IsNullOrWhiteSpace(RoomCode) ||
+                string.IsNullOrWhiteSpace(name))
             {
                 return;
             }
 
-            try
+            Exception? lastException = null;
+
+            // The SignalR transport can reconnect before the server-side
+            // room membership is ready again. Retry JoinRoom a few times
+            // instead of immediately marking the user as failed.
+            for (var attempt = 1; attempt <= 3; attempt++)
             {
-                // Join the room again after reconnect.
-                await hub.InvokeAsync(
-                    "JoinRoom",
-                    RoomCode,
-                    name);
+                try
+                {
+                    await hub.InvokeAsync(
+                        "JoinRoom",
+                        RoomCode,
+                        name);
 
-                connected = true;
+                    connected = true;
 
-                // Current user is online again.
-                knownParticipants.Add(name);
+                    knownParticipants.Add(name);
+                    onlineUsers.Add(name);
 
-                onlineUsers.Add(name);
+                    CancelOfflineRemoval(name);
 
-                CancelOfflineRemoval(name);
+                    error = null;
+
+                    await InvokeAsync(
+                        StateHasChanged);
+
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+
+                    if (attempt < 3)
+                    {
+                        try
+                        {
+                            await Task.Delay(
+                                TimeSpan.FromSeconds(attempt),
+                                presenceHeartbeatCts?.Token ??
+                                CancellationToken.None);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+                    }
+                }
             }
-            catch
-            {
-                connected = false;
 
-                onlineUsers.Remove(name);
-            }
+            connected = false;
+            onlineUsers.Remove(name);
+
+            // Do not silently hide the actual JoinRoom failure.
+            error =
+                lastException is null
+                    ? "Chat reconnected, but room rejoin failed."
+                    : $"Chat reconnected, but room rejoin failed: {lastException.Message}";
+
+            Console.WriteLine(
+                $"[ChatApp] SignalR RejoinRoom failed after reconnect: {lastException}");
 
             await InvokeAsync(
                 StateHasChanged);
@@ -3516,6 +3975,272 @@ else
 
 
     // ============================================================
+    // PHOTO SELECTION
+    // ============================================================
+
+    private async Task HandlePhotoSelected(InputFileChangeEventArgs e)
+    {
+        photoError = null;
+
+        var file = e.File;
+
+        if (file is null)
+        {
+            return;
+        }
+
+        if (file.Size <= 0 || file.Size > MaxPhotoSize)
+        {
+            photoError = "Photo must be 10 MB or smaller.";
+            await CancelPhotoSelection();
+            return;
+        }
+
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            photoError = "Please select a valid image.";
+            await CancelPhotoSelection();
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+        if (extension is not ".jpg" and
+            not ".jpeg" and
+            not ".png" and
+            not ".gif" and
+            not ".webp")
+        {
+            photoError = "Supported formats: JPG, JPEG, PNG, GIF and WEBP.";
+            await CancelPhotoSelection();
+            return;
+        }
+
+        try
+        {
+            selectedPhoto = file;
+
+            if (photoModule is null)
+            {
+                photoModule =
+                    await JS.InvokeAsync<IJSObjectReference>(
+                        "import",
+                        "/js/photoUpload.js");
+            }
+
+            selectedPhotoPreviewUrl =
+                await photoModule.InvokeAsync<string>(
+                    "createPreview",
+                    "photoInput");
+
+            if (string.IsNullOrWhiteSpace(selectedPhotoPreviewUrl))
+            {
+                await CancelPhotoSelection();
+                photoError = "Unable to preview the selected photo.";
+                return;
+            }
+
+            composerEmojiPickerOpen = false;
+            mobileComposerEmojiOpen = false;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await CancelPhotoSelection();
+            photoError = $"Unable to preview photo: {ex.Message}";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private async Task CancelPhotoSelection()
+    {
+        try
+        {
+            if (photoModule is not null)
+            {
+                await photoModule.InvokeVoidAsync("clearPreview", "photoInput");
+            }
+        }
+        catch
+        {
+        }
+
+        selectedPhoto = null;
+        selectedPhotoPreviewUrl = null;
+        photoSending = false;
+        selectedPhotoMode = "Normal";
+    }
+
+
+    private async Task SendPhoto()
+    {
+        if (selectedPhoto is null ||
+            hub is null ||
+            !connected ||
+            photoSending)
+        {
+            return;
+        }
+
+        photoError = null;
+        photoSending = true;
+
+        try
+        {
+            await using var stream =
+                selectedPhoto.OpenReadStream(MaxPhotoSize);
+
+            using var memoryStream = new MemoryStream();
+
+            await stream.CopyToAsync(memoryStream);
+
+            var fileBytes = memoryStream.ToArray();
+
+            var replyId = replyingTo?.Id;
+
+            await hub.InvokeAsync(
+    "SendPhoto",
+    RoomCode,
+    name,
+    fileBytes,
+    selectedPhoto.Name,
+    selectedPhoto.ContentType,
+    selectedPhotoMode,
+    replyId);
+
+            await CancelPhotoSelection();
+
+            replyingTo = null;
+
+            typingUser = null;
+
+            typingCts?.Cancel();
+
+            await BlurMobileComposerAsync();
+
+            await InvokeAsync(StateHasChanged);
+
+            await ScrollToBottomAsync();
+        }
+        catch (Exception ex)
+        {
+            photoSending = false;
+            photoError = $"Unable to send photo: {ex.Message}";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private string GetPhotoUrl(MessageVm message, bool download = false)
+    {
+        var user = Uri.EscapeDataString(name);
+        var room = Uri.EscapeDataString(RoomCode);
+        var mode = download ? "1" : "0";
+        return $"/api/media/{message.Id}?roomCode={room}&userName={user}&download={mode}";
+    }
+
+    private async Task OpenPhotoViewer(MessageVm message)
+    {
+        photoViewerMessage = message;
+        photoViewerUrl = GetPhotoUrl(message);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OpenViewOncePhoto(MessageVm message)
+    {
+        if (message is null)
+        {
+            photoError = "This photo is not available.";
+            return;
+        }
+
+        if (message.Id <= 0)
+        {
+            photoError = "Invalid View Once photo message.";
+            return;
+        }
+
+        if (message.ViewedAt.HasValue)
+        {
+            photoError = "This view-once photo has already been opened.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(RoomCode))
+        {
+            photoError = "Invalid chat room.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            photoError = "Your display name is required.";
+            return;
+        }
+
+        try
+        {
+            photoError = null;
+
+            var response = await JS.InvokeAsync<string>(
+                "fetchViewOncePhoto",
+                message.Id,
+                RoomCode,
+                name);
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                photoError = "This photo is no longer available.";
+                return;
+            }
+
+            var viewedMessage =
+                message with { ViewedAt = DateTime.UtcNow };
+
+            var index = messages.FindIndex(x => x.Id == message.Id);
+            if (index >= 0)
+            {
+                messages[index] = viewedMessage;
+            }
+
+            photoViewerMessage = viewedMessage;
+            photoViewerUrl = response;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            photoError = $"Unable to open photo: {ex.Message}";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ClosePhotoViewer()
+    {
+        photoViewerMessage = null;
+        photoViewerUrl = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string FormatFileSize(long size)
+    {
+        if (size < 1024)
+        {
+            return $"{size} B";
+        }
+
+        if (size < 1024 * 1024)
+        {
+            return $"{size / 1024d:0.#} KB";
+        }
+
+        return $"{size / (1024d * 1024d):0.#} MB";
+    }
+
+
+    // ============================================================
     // SEND
     // ============================================================
 
@@ -3874,6 +4599,19 @@ else
             {
             }
 
+            // Load photo preview JavaScript module.
+            try
+            {
+                photoModule =
+                    await JS.InvokeAsync<IJSObjectReference>(
+                        "import",
+                        "/js/photoUpload.js");
+            }
+            catch
+            {
+                photoModule = null;
+            }
+
             // Load push notification JavaScript module.
             try
             {
@@ -4118,6 +4856,25 @@ else
 
 
         // --------------------------------------------------------
+        // DISPOSE PHOTO MODULE
+        // --------------------------------------------------------
+
+        try
+        {
+            if (photoModule is not null)
+            {
+                await photoModule.InvokeVoidAsync(
+                    "clearPreview",
+                    "photoInput");
+                await photoModule.DisposeAsync();
+            }
+        }
+        catch
+        {
+        }
+
+
+        // --------------------------------------------------------
         // DISPOSE PUSH MODULE
         // --------------------------------------------------------
 
@@ -4176,7 +4933,15 @@ else
         string? ReplyToSender,
         string? ReplyToText,
         bool IsDeleted = false,
-        List<ReactionVm>? Reactions = null)
+        List<ReactionVm>? Reactions = null,
+        string MessageType = "Text",
+        string? MediaPath = null,
+        string? MediaContentType = null,
+        string? MediaFileName = null,
+        long? MediaSize = null,
+        string? PhotoMode = null,
+        DateTime? ExpiresAt = null,
+        DateTime? ViewedAt = null)
     {
         public IReadOnlyList<ReactionVm> ReactionItems =>
             Reactions ?? [];
